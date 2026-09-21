@@ -3,10 +3,11 @@ import { getProductById } from '@/lib/woocommerce'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const product = await getProductById(Number(params.id))
+    const { id } = await params
+    const product = await getProductById(Number(id))
     return NextResponse.json(product)
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to fetch product' }, { status: 500 })

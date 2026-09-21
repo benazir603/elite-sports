@@ -42,7 +42,8 @@ export async function POST() {
       let parentCat = existingByName.get(normalizeForMatch(category))
 
       if (!parentCat) {
-        parentCat = await createCategory(category)
+        const createdParent = await createCategory(category)
+        parentCat = { ...createdParent, parent: 0 }
         existingByName.set(normalizeForMatch(parentCat.name), parentCat)
       }
 
@@ -50,7 +51,7 @@ export async function POST() {
       for (const type of types) {
         const childMatchName = normalizeForMatch(type)
         const childExists = Array.from(existingByName.values()).some(
-          (c) => c.parent === parentCat!.id && normalizeForMatch(c.name) === childMatchName
+          (c) => c.parent === parentCat.id && normalizeForMatch(c.name) === childMatchName
         )
         if (!childExists) {
           const childSlug = `${parentCat.slug}-${type.toLowerCase().replace(/\s+/g, '-')}`

@@ -3,7 +3,7 @@ import { getProducts, createProduct, createOrder, updateOrder } from '@/lib/wooc
 
 async function createSampleOrder(email: string, setDelivered: boolean) {
   let products = await getProducts({ per_page: 1 })
-  let product = products[0]
+  let product: { id: number; name: string } | undefined = products[0]
 
   if (!product) {
     product = await createProduct({

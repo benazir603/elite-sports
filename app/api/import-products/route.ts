@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
       (c) => c.name.toLowerCase() === 'badminton' || c.slug === 'badminton'
     )
     if (!badminton) {
-      badminton = await createCategory('Badminton', 'badminton')
+      const created = await createCategory('Badminton', 'badminton')
+      badminton = { ...created, parent: 0 }
     }
 
     const results: { id: number; name: string }[] = []

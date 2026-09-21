@@ -31,7 +31,7 @@ export default function CheckoutPage() {
         ...prev,
         firstName: prev.firstName || first || '',
         lastName: prev.lastName || last || '',
-        email: prev.email || session.user.email || '',
+        email: prev.email || session.user?.email || '',
       }))
     }
   }, [session])

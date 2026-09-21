@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Header from '../components/Header'
 import { useCart } from '../components/CartProvider'
@@ -12,6 +12,7 @@ interface Product {
   category: string
   price: number
   originalPrice: number
+  image?: string
 }
 
 const products: Product[] = [
@@ -39,7 +40,7 @@ function getProductImage(product: Product, query: string) {
   return `https://placehold.co/600x600/f5f5f5/111827.png?text=${text}`
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const q = searchParams.get('q') || ''
   const { addToCart: addToCartContext } = useCart()
@@ -121,5 +122,13 @@ export default function SearchPage() {
         </div>
       </main>
     </>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<><Header /><main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-500">Loading search...</p></main></>}>
+      <SearchContent />
+    </Suspense>
   )
 }
