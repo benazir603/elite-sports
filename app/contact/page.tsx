@@ -19,7 +19,7 @@ export default function ContactPage() {
           <div className="grid sm:grid-cols-2 gap-6 mb-8">
             <div className="bg-gray-50 rounded-xl p-5">
               <h2 className="font-bold text-gray-900 mb-2">Email</h2>
-              <p className="text-gray-600">support@elitesports.com</p>
+              <p className="text-gray-600">elitesportselaiyur@gmail.com</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-5">
               <h2 className="font-bold text-gray-900 mb-2">Phone</h2>

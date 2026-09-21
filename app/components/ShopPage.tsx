@@ -327,7 +327,7 @@ export default function ShopPage() {
           <div>
             <h4 className="font-bold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>support@elitesports.com</li>
+              <li>elitesportselaiyur@gmail.com</li>
               <li>+1 (555) 123-4567</li>
               <li>123 Athlete Ave, New York, NY</li>
             </ul>
