@@ -40,7 +40,7 @@ export default function CartDrawer() {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex gap-4 items-center">
+              <div key={item.key} className="flex gap-4 items-center">
                 <img
                   src={item.image}
                   alt={item.name}
@@ -52,23 +52,24 @@ export default function CartDrawer() {
                 <div className="flex-1">
                   <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>
                   <h4 className="font-bold text-sm leading-tight mb-1">{item.name}</h4>
+                  {item.variation && <p className="text-xs text-gray-500">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                   <p className="font-bold text-red-600">{formatMoney(item.price)}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <button
-                      onClick={() => updateQty(item.id, -1)}
+                      onClick={() => updateQty(item.key, -1)}
                       className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-xs hover:border-red-600 hover:text-red-600"
                     >
                       -
                     </button>
                     <span className="text-sm font-semibold">{item.qty}</span>
                     <button
-                      onClick={() => updateQty(item.id, 1)}
+                      onClick={() => updateQty(item.key, 1)}
                       className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-xs hover:border-red-600 hover:text-red-600"
                     >
                       +
                     </button>
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.key)}
                       className="ml-auto text-xs text-red-600 font-bold hover:underline"
                     >
                       Remove

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Header from '../components/Header'
 
 interface ShippingAddress {
@@ -71,12 +72,29 @@ function formatAddress(shipping?: ShippingAddress) {
   return parts.filter(Boolean).join(', ')
 }
 
-export default function TrackOrderPage() {
+function TrackOrderPage() {
+  const searchParams = useSearchParams()
   const [orderId, setOrderId] = useState('')
   const [email, setEmail] = useState('')
   const [order, setOrder] = useState<OrderResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const id = searchParams.get('id')
+    const em = searchParams.get('email')
+    if (id) setOrderId(id)
+    if (em) setEmail(em)
+    if (id && em) {
+      fetch(`/api/track-order?id=${encodeURIComponent(id)}&email=${encodeURIComponent(em)}`)
+        .then(async (res) => {
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Order not found')
+          setOrder(data)
+        })
+        .catch((err) => setError(err.message || 'Could not find order'))
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -271,5 +289,13 @@ export default function TrackOrderPage() {
         </div>
       </main>
     </>
+  )
+}
+
+export default function TrackOrderPageWrapper() {
+  return (
+    <Suspense fallback={<><Header /><main className="min-h-screen bg-gray-50 py-12 px-4"><p className="text-center text-gray-500">Loading...</p></main></>}>
+      <TrackOrderPage />
+    </Suspense>
   )
 }

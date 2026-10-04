@@ -32,7 +32,7 @@ export default function CartPage() {
               <div className="flex-1 space-y-4">
                 {cart.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.key}
                     className="flex gap-4 bg-white border border-gray-200 rounded-2xl p-4"
                   >
                     <img
@@ -46,23 +46,24 @@ export default function CartPage() {
                     <div className="flex-1">
                       <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>
                       <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                      {item.variation && <p className="text-sm text-gray-500">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                       <p className="font-bold text-red-600">{formatMoney(item.price)}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <button
-                          onClick={() => updateQty(item.id, -1)}
+                          onClick={() => updateQty(item.key, -1)}
                           className="w-8 h-8 rounded-full border border-gray-300 hover:border-red-600 hover:text-red-600"
                         >
                           -
                         </button>
                         <span className="font-bold">{item.qty}</span>
                         <button
-                          onClick={() => updateQty(item.id, 1)}
+                          onClick={() => updateQty(item.key, 1)}
                           className="w-8 h-8 rounded-full border border-gray-300 hover:border-red-600 hover:text-red-600"
                         >
                           +
                         </button>
                         <button
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(item.key)}
                           className="ml-auto text-sm text-red-600 font-bold hover:underline"
                         >
                           Remove

@@ -3,7 +3,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, ReactNode } from 'react'
 
 export interface CartItem {
+  key: string
   id: number
+  variationId?: number
+  variation?: Record<string, string>
   name: string
   brand: string
   price: number
@@ -11,13 +14,15 @@ export interface CartItem {
   qty: number
 }
 
+export type CartItemInput = Omit<CartItem, 'key' | 'qty'>
+
 interface CartContextValue {
   cart: CartItem[]
   cartCount: number
   cartTotal: number
-  addToCart: (item: Omit<CartItem, 'qty'>) => void
-  updateQty: (id: number, change: number) => void
-  removeFromCart: (id: number) => void
+  addToCart: (item: CartItemInput) => void
+  updateQty: (key: string, change: number) => void
+  removeFromCart: (key: string) => void
   clearCart: () => void
   isCartDrawerOpen: boolean
   openCartDrawer: () => void
@@ -26,12 +31,17 @@ interface CartContextValue {
 
 const CART_KEY = 'elite-cart'
 
+function getCartKey(item: Pick<CartItem, 'id' | 'variationId'>) {
+  return `${item.id}:${item.variationId || 0}`
+}
+
 function loadCart(): CartItem[] {
   if (typeof window === 'undefined') return []
   const saved = localStorage.getItem(CART_KEY)
   if (!saved) return []
   try {
-    return JSON.parse(saved) as CartItem[]
+    const items = JSON.parse(saved) as CartItem[]
+    return Array.isArray(items) ? items.map((item) => ({ ...item, key: getCartKey(item) })) : []
   } catch {
     return []
   }
@@ -42,16 +52,18 @@ const CartContext = createContext<CartContextValue | undefined>(undefined)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     setCart(loadCart())
+    setHydrated(true)
   }, [])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (hydrated && typeof window !== 'undefined') {
       localStorage.setItem(CART_KEY, JSON.stringify(cart))
     }
-  }, [cart])
+  }, [cart, hydrated])
 
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart])
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.qty, 0), [cart])
@@ -59,30 +71,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openCartDrawer = useCallback(() => setIsCartDrawerOpen(true), [])
   const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), [])
 
-  const addToCart = useCallback(
-    (item: Omit<CartItem, 'qty'>) => {
-      setCart((prev) => {
-        const existing = prev.find((i) => i.id === item.id)
-        if (existing) {
-          return prev.map((i) => (i.id === item.id ? { ...i, qty: i.qty + 1 } : i))
-        }
-        return [...prev, { ...item, qty: 1 }]
-      })
-      setIsCartDrawerOpen(true)
-    },
-    []
-  )
+  const addToCart = useCallback((item: CartItemInput) => {
+    const key = getCartKey(item)
+    setCart((prev) => {
+      const existing = prev.find((cartItem) => cartItem.key === key)
+      if (existing) {
+        return prev.map((cartItem) => (cartItem.key === key ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem))
+      }
+      return [...prev, { ...item, key, qty: 1 }]
+    })
+    setIsCartDrawerOpen(true)
+  }, [])
 
-  const updateQty = useCallback((id: number, change: number) => {
+  const updateQty = useCallback((key: string, change: number) => {
     setCart((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, qty: item.qty + change } : item))
+        .map((item) => (item.key === key ? { ...item, qty: item.qty + change } : item))
         .filter((item) => item.qty > 0)
     )
   }, [])
 
-  const removeFromCart = useCallback((id: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== id))
+  const removeFromCart = useCallback((key: string) => {
+    setCart((prev) => prev.filter((item) => item.key !== key))
   }, [])
 
   const clearCart = useCallback(() => {

@@ -2,49 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Header from './Header'
-import { useCart } from './CartProvider'
-
-interface Product {
-  id: number
-  name: string
-  category: string
-  price: number
-  image: string
-}
-
-interface WooCommerceProduct {
-  id: number
-  name: string
-  price: string
-  regular_price: string
-  images: { src: string }[]
-  categories: { name: string }[]
-}
-
-const localProducts: Product[] = [
-  { id: 1, name: 'Nike Air Zoom Pegasus 40', category: 'Running', price: 140, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80' },
-  { id: 2, name: 'Adidas Ultraboost Light', category: 'Running', price: 190, image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a1?auto=format&fit=crop&w=600&q=80' },
-  { id: 3, name: 'Jordan 1 Retro High OG', category: 'Lifestyle', price: 180, image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80' },
-  { id: 4, name: 'Under Armour Curry 10', category: 'Basketball', price: 160, image: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=600&q=80' },
-  { id: 5, name: 'Puma RS-X Bold', category: 'Lifestyle', price: 120, image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=600&q=80' },
-  { id: 6, name: 'New Balance 990v6', category: 'Running', price: 200, image: 'https://images.unsplash.com/photo-1549298916-b41d94d566b2?auto=format&fit=crop&w=600&q=80' },
-  { id: 7, name: 'Nike LeBron 20', category: 'Basketball', price: 200, image: 'https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=600&q=80' },
-  { id: 8, name: 'Converse Chuck 70 Plus', category: 'Lifestyle', price: 95, image: 'https://placehold.co/600x400/1f2937/ffffff?text=Converse+Chuck+70' },
-]
-
-function formatMoney(amount: number) {
-  return '₹' + amount.toFixed(2)
-}
 
 export default function ShopPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [filter, setFilter] = useState('all')
   const [currentSlide, setCurrentSlide] = useState(0)
-  const { addToCart: addToCartContext } = useCart()
-
-  useEffect(() => {
-    setProducts(localProducts)
-  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -52,20 +12,6 @@ export default function ShopPage() {
     }, 5000)
     return () => clearInterval(timer)
   }, [])
-
-  const filteredProducts = filter === 'all' ? products : products.filter((p) => p.category === filter)
-
-  function addToCart(id: number) {
-    const product = products.find((p) => p.id === id)
-    if (!product) return
-    addToCartContext({
-      id: product.id,
-      name: product.name,
-      brand: (product as any).brand || product.category || 'Elite',
-      price: product.price,
-      image: product.image,
-    })
-  }
 
   return (
     <>
@@ -177,67 +123,156 @@ export default function ShopPage() {
         </div>
       </section>
 
-      {/* Shop */}
+      {/* Shop by sport */}
       <section id="shop" className="py-20">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4">
-            <div>
-              <p className="text-red-600 font-bold uppercase tracking-widest text-sm mb-2">Shop the Best</p>
-              <h2 className="text-3xl md:text-4xl font-black">Trending Footwear</h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {['all', 'Running', 'Basketball', 'Lifestyle'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`px-4 py-2 text-sm font-semibold rounded-full border transition ${
-                    filter === cat
-                      ? 'bg-black text-white border-black'
-                      : 'border-gray-200 hover:border-black text-gray-700'
-                  }`}
-                >
-                  {cat === 'all' ? 'All' : cat}
-                </button>
-              ))}
-            </div>
+          <div className="text-center mb-12">
+            <p className="text-red-600 font-bold uppercase tracking-widest text-sm mb-2">Shop by Sport</p>
+            <h2 className="text-3xl md:text-4xl font-black">Find Your Game</h2>
+            <p className="text-gray-500 mt-3 max-w-xl mx-auto">Premium gear for every athlete — from the pitch to the court.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition duration-300"
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Cricket',
+                href: '/cricket',
+                image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=80',
+                tag: 'Bats, Balls & Protective Gear',
+              },
+              {
+                name: 'Badminton',
+                href: '/badminton',
+                image: 'https://images.unsplash.com/photo-1626224583764-8478ab2e1538?auto=format&fit=crop&w=800&q=80',
+                tag: 'Rackets & Shuttlecocks',
+              },
+              {
+                name: 'Football',
+                href: '/football',
+                image: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?auto=format&fit=crop&w=800&q=80',
+                tag: 'Balls, Studs & Kits',
+              },
+              {
+                name: 'Basketball',
+                href: '/basketball',
+                image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
+                tag: 'Balls & Court Essentials',
+              },
+              {
+                name: 'Fitness & Gym',
+                href: '/fitness',
+                image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+                tag: 'Dumbbells, Bands & More',
+              },
+              {
+                name: 'Table Tennis',
+                href: '/table-tennis',
+                image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=800&q=80',
+                tag: 'Bats, Balls & Rubbers',
+              },
+            ].map((sport) => (
+              <a
+                key={sport.name}
+                href={sport.href}
+                className="group relative h-72 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition duration-300"
               >
-                <div className="relative overflow-hidden h-64 bg-gray-50">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-contain transition duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = `https://placehold.co/600x400/eeeeee/333333?text=${encodeURIComponent(product.name)}`
-                    }}
-                  />
-                  <span className="absolute top-3 left-3 bg-white/90 text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full">
-                    {product.category}
-                  </span>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-bold text-lg mb-1 leading-tight">{product.name}</h3>
-                  <p className="text-gray-500 text-sm mb-4">Premium performance</p>
+                <img
+                  src={sport.image}
+                  alt={sport.name}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                  onError={(e) => (e.currentTarget.src = `https://placehold.co/800x600/1f2937/ffffff?text=${encodeURIComponent(sport.name)}`)}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">{sport.tag}</p>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xl">{formatMoney(product.price)}</span>
-                    <button
-                      onClick={() => addToCart(product.id)}
-                      className="bg-black hover:bg-red-600 text-white text-sm font-bold py-2.5 px-5 rounded-full transition"
-                    >
-                      Add to Cart
-                    </button>
+                    <h3 className="text-white text-2xl font-black uppercase tracking-tight">{sport.name}</h3>
+                    <span className="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition">
+                      Shop Now
+                    </span>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Featured collections */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-red-600 font-bold uppercase tracking-widest text-sm mb-2">Featured</p>
+            <h2 className="text-3xl md:text-4xl font-black">This Season's Picks</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <a
+              href="/badminton"
+              className="group relative h-80 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1613918228405-96e96ff524de?auto=format&fit=crop&w=1000&q=80"
+                alt="Badminton essentials"
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                onError={(e) => (e.currentTarget.src = 'https://placehold.co/1000x600/1f2937/ffffff?text=Badminton+Essentials')}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 flex items-center p-10">
+                <div className="max-w-sm">
+                  <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-2">Court Ready</p>
+                  <h3 className="text-white text-3xl font-black mb-3">Badminton Essentials</h3>
+                  <p className="text-gray-300 text-sm mb-6">Lightweight rackets, feather shuttlecocks and grip that wins rallies.</p>
+                  <span className="inline-flex items-center bg-red-600 text-white font-bold text-sm px-6 py-3 rounded-full group-hover:bg-red-700 transition">
+                    Shop Badminton
+                  </span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="/cricket"
+              className="group relative h-80 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=1000&q=80"
+                alt="Cricket gear"
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                onError={(e) => (e.currentTarget.src = 'https://placehold.co/1000x600/1f2937/ffffff?text=Cricket+Gear')}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 flex items-center p-10">
+                <div className="max-w-sm">
+                  <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-2">Match Winners</p>
+                  <h3 className="text-white text-3xl font-black mb-3">Cricket Gear</h3>
+                  <p className="text-gray-300 text-sm mb-6">English willow bats, leather balls and pro-grade protection.</p>
+                  <span className="inline-flex items-center bg-red-600 text-white font-bold text-sm px-6 py-3 rounded-full group-hover:bg-red-700 transition">
+                    Shop Cricket
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Sale banner */}
+      <section className="py-20 bg-red-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <p className="uppercase tracking-widest text-sm font-bold text-red-200 mb-2">Limited Time</p>
+            <h2 className="text-3xl md:text-5xl font-black leading-tight">Season Sale — Up to 40% Off</h2>
+            <p className="text-red-100 mt-3 max-w-lg">Grab pro-level gear at unbeatable prices. On selected rackets, bats, shoes and apparel.</p>
+          </div>
+          <a
+            href="/badminton"
+            className="flex-shrink-0 bg-white text-red-600 font-black uppercase tracking-wide px-10 py-4 rounded-full hover:bg-gray-100 transition shadow-lg"
+          >
+            Shop the Sale
+          </a>
         </div>
       </section>
 
@@ -263,34 +298,6 @@ export default function ShopPage() {
               Shop Collection
             </a>
           </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-black mb-3">Join the Elite Team</h2>
-          <p className="text-gray-500 mb-8">Get early access to new drops, exclusive offers, and training tips.</p>
-          <form
-            className="flex flex-col sm:flex-row gap-3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              alert('Thanks for subscribing!')
-            }}
-          >
-            <input
-              type="email"
-              required
-              placeholder="Enter your email"
-              className="flex-1 px-5 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-red-600"
-            />
-            <button
-              type="submit"
-              className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-full transition"
-            >
-              Subscribe
-            </button>
-          </form>
         </div>
       </section>
 

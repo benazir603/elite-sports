@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Razorpay setup
+
+Set these server-only environment variables locally and in the production deployment:
+
+```env
+RAZORPAY_KEY_ID=rzp_test_or_live_key
+RAZORPAY_KEY_SECRET=key_secret
+RAZORPAY_WEBHOOK_SECRET=separate_webhook_signing_secret
+```
+
+In the Razorpay dashboard, register `https://your-domain.com/api/razorpay/webhook` and subscribe to `payment.captured` and `order.paid`. Use a separate, randomly generated webhook secret and enter the same value as `RAZORPAY_WEBHOOK_SECRET`. Test-mode and live-mode keys and webhooks must be configured separately.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

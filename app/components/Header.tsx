@@ -131,13 +131,6 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
   const [mobileActive, setMobileActive] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
-  function handleSearch() {
-    const q = searchQuery.trim()
-    if (q) {
-      window.location.href = `/search?q=${encodeURIComponent(q)}`
-    }
-  }
-
   const activeCatData = categories.find((c) => c.name === activeCategory)
 
   return (
@@ -173,21 +166,21 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
 
           {/* Search */}
           <div className="hidden lg:flex flex-1 max-w-2xl mx-6">
-            <div className="relative w-full">
+            <form action="/search" method="get" className="relative w-full">
               <input
-                type="text"
+                type="search"
+                name="q"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search for products"
                 className="w-full pl-5 pr-12 py-2.5 text-sm border-2 border-gray-200 rounded-full focus:outline-none focus:border-red-600 transition"
               />
-              <button onClick={handleSearch} className="absolute right-1 top-1/2 -translate-y-1/2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition" aria-label="Search">
+              <button type="submit" disabled={!searchQuery.trim()} className="absolute right-1 top-1/2 -translate-y-1/2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition disabled:cursor-not-allowed disabled:opacity-50" aria-label="Search">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Right actions */}

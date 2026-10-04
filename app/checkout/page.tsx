@@ -33,6 +33,25 @@ export default function CheckoutPage() {
         lastName: prev.lastName || last || '',
         email: prev.email || session.user?.email || '',
       }))
+
+      fetch('/api/account')
+        .then((res) => res.json())
+        .then((data) => {
+          const s = data?.customer?.shipping
+          if (!s) return
+          setForm((prev) => ({
+            ...prev,
+            firstName: prev.firstName || s.first_name || '',
+            lastName: prev.lastName || s.last_name || '',
+            phone: prev.phone || s.phone || '',
+            address: prev.address || s.address_1 || '',
+            city: prev.city || s.city || '',
+            state: prev.state || s.state || '',
+            postcode: prev.postcode || s.postcode || '',
+            country: prev.country || s.country || 'IN',
+          }))
+        })
+        .catch(() => {})
     }
   }, [session])
 
@@ -162,6 +181,20 @@ export default function CheckoutPage() {
               </svg>
               Continue with Google
             </button>
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">or</span>
+              </div>
+            </div>
+            <a
+              href="/account?redirect=/checkout"
+              className="block w-full bg-black hover:bg-red-600 text-white font-bold py-3 rounded-full transition"
+            >
+              Log in with Email
+            </a>
             <p className="mt-6 text-sm text-gray-500">
               <a href="/cart" className="text-red-600 font-semibold hover:underline">Return to cart</a>
             </p>
@@ -275,7 +308,7 @@ export default function CheckoutPage() {
             ) : (
               <>
                 {cart.map((item) => (
-                  <div key={item.id} className="flex gap-4 mb-4">
+                  <div key={item.key} className="flex gap-4 mb-4">
                     <img
                       src={item.image}
                       alt={item.name}
@@ -286,6 +319,7 @@ export default function CheckoutPage() {
                     />
                     <div className="flex-1">
                       <p className="font-semibold">{item.name}</p>
+                      {item.variation && <p className="text-gray-500 text-sm">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                       <p className="text-gray-500 text-sm">Qty: {item.qty}</p>
                       <p className="font-bold text-red-600">{formatMoney(item.price * item.qty)}</p>
                     </div>

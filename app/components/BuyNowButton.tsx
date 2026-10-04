@@ -2,10 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
-import type { CartItem } from './CartProvider'
+import type { CartItemInput } from './CartProvider'
 
 interface BuyNowButtonProps {
-  product: Omit<CartItem, 'qty'>
+  product: CartItemInput
   className?: string
 }
 

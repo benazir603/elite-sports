@@ -1,13 +1,8 @@
 import { notFound } from 'next/navigation'
 import Header from '@/app/components/Header'
-import AddToCartButton from '@/app/components/AddToCartButton'
-import BuyNowButton from '@/app/components/BuyNowButton'
 import ProductImageGallery from '@/app/components/ProductImageGallery'
-import { getProductById } from '@/lib/woocommerce'
-
-function formatMoney(amount: number) {
-  return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
+import ProductPurchaseOptions from '@/app/components/ProductPurchaseOptions'
+import { getProductById, getProductVariations } from '@/lib/woocommerce'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
@@ -21,22 +16,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
+  const variations = product.type === 'variable' ? await getProductVariations(product.id) : []
   const images = product.images.map((img) => img.src)
   const image = images[0] || `https://placehold.co/600x600/f5f5f5/333333.png?text=${encodeURIComponent(product.name)}`
   const brand = product.categories[0]?.name || 'Elite'
   const price = Number(product.price) || Number(product.regular_price) || 0
   const regularPrice = Number(product.regular_price) || price
   const inStock = product.stock_status === 'instock'
-  const discount = regularPrice > price ? regularPrice - price : 0
-  const discountPercent = regularPrice > 0 ? Math.round((discount / regularPrice) * 100) : 0
-
-  const cartItem = {
-    id: product.id,
-    name: product.name,
-    brand,
-    price,
-    image,
-  }
 
   const bullets = product.short_description
     ? product.short_description
@@ -66,30 +52,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               {product.sku && <p className="text-xs text-gray-400 mb-4">SKU: {product.sku}</p>}
 
-              <div className="border-b border-gray-200 pb-4 mb-4">
-                {discount > 0 && (
-                  <p className="text-sm text-gray-500 mb-1">
-                    M.R.P.: <span className="line-through">{formatMoney(regularPrice)}</span>
-                  </p>
-                )}
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-gray-900">{formatMoney(price)}</span>
-                  {discount > 0 && (
-                    <span className="text-sm font-medium text-green-700">Save {formatMoney(discount)} ({discountPercent}%)</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-sm mb-6">
-                {inStock ? (
-                  <span className="text-green-600 font-semibold">In stock</span>
-                ) : (
-                  <span className="text-red-600 font-semibold">Out of stock</span>
-                )}
-                {product.stock_quantity !== null && product.stock_quantity !== undefined && (
-                  <span className="text-gray-500 ml-2">({product.stock_quantity} units available)</span>
-                )}
-              </div>
+              <ProductPurchaseOptions
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  brand,
+                  price,
+                  regularPrice,
+                  image,
+                  inStock,
+                  stockQuantity: product.stock_quantity,
+                }}
+                attributes={product.attributes || []}
+                variations={variations}
+              />
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                 <p className="font-bold text-gray-900 mb-1">FREE Delivery</p>
@@ -98,16 +74,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <p className="text-sm text-gray-500 mt-2">7-day easy returns. Secure transaction.</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 mb-8 w-full">
-                <AddToCartButton
-                  product={cartItem}
-                  className="w-full sm:flex-1 bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-medium text-center py-2.5 px-6 rounded shadow-sm border border-[#FCD200]"
-                />
-                <BuyNowButton
-                  product={cartItem}
-                  className="w-full sm:flex-1 bg-[#FFA41C] hover:bg-[#FA8900] text-gray-900 font-medium text-center py-2.5 px-6 rounded shadow-sm border border-[#FF8F00]"
-                />
-              </div>
 
               {bullets.length > 0 && (
                 <div className="mb-8">

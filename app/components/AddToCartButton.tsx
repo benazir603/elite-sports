@@ -1,10 +1,10 @@
 'use client'
 
 import { useCart } from './CartProvider'
-import type { CartItem } from './CartProvider'
+import type { CartItemInput } from './CartProvider'
 
 interface AddToCartButtonProps {
-  product: Omit<CartItem, 'qty'>
+  product: CartItemInput
   className?: string
 }
 

@@ -340,7 +340,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                       key={product.id}
                       className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition duration-300 flex flex-col h-full"
                     >
-                      <div className="relative overflow-hidden aspect-square bg-gray-50">
+                      <div className="relative aspect-square bg-gray-50 overflow-hidden">
                         <Link href={`/product/${product.id}`} className="block w-full h-full">
                           <img
                             src={getProductImage(product, category)}
