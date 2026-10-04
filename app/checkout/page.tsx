@@ -20,6 +20,7 @@ export default function CheckoutPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [savedCustomer, setSavedCustomer] = useState<any>(null)
   const { data: session, status } = useSession()
 
   useEffect(() => {
@@ -34,9 +35,10 @@ export default function CheckoutPage() {
         email: prev.email || session.user?.email || '',
       }))
 
-      fetch('/api/account')
+      fetch('/api/account', { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
+          setSavedCustomer(data?.customer || null)
           const s = data?.customer?.shipping
           if (!s) return
           setForm((prev) => ({
@@ -54,6 +56,22 @@ export default function CheckoutPage() {
         .catch(() => {})
     }
   }, [session])
+
+  function useSavedAddress() {
+    const s = savedCustomer?.shipping
+    if (!s) return
+    setForm({
+      firstName: s.first_name || '',
+      lastName: s.last_name || '',
+      email: session?.user?.email || '',
+      phone: s.phone || '',
+      address: s.address_1 || '',
+      city: s.city || '',
+      state: s.state || '',
+      postcode: s.postcode || '',
+      country: s.country || 'IN',
+    })
+  }
 
   function formatMoney(amount: number) {
     return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -211,6 +229,27 @@ export default function CheckoutPage() {
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <h1 className="text-2xl font-black uppercase tracking-tight mb-6">Checkout</h1>
+
+            {savedCustomer?.shipping && (savedCustomer.shipping.address_1 || savedCustomer.shipping.city) && (
+              <div className="border border-red-200 bg-red-50 rounded-xl p-4 mb-6">
+                <p className="text-xs font-bold uppercase tracking-wide text-red-600 mb-2">Saved Delivery Address</p>
+                <p className="text-sm text-gray-800 font-semibold">
+                  {savedCustomer.shipping.first_name} {savedCustomer.shipping.last_name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {savedCustomer.shipping.address_1}{savedCustomer.shipping.address_2 ? `, ${savedCustomer.shipping.address_2}` : ''}, {savedCustomer.shipping.city}, {savedCustomer.shipping.state} {savedCustomer.shipping.postcode}
+                </p>
+                <p className="text-sm text-gray-600 mb-3">{savedCustomer.shipping.phone}</p>
+                <button
+                  type="button"
+                  onClick={useSavedAddress}
+                  className="bg-black hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-full transition"
+                >
+                  Deliver to this address
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input

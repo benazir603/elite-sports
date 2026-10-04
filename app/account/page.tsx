@@ -43,7 +43,7 @@ function AccountPageContent() {
 
   useEffect(() => {
     if (session?.user) {
-      fetch('/api/orders')
+      fetch('/api/orders', { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
           if (data.orders) setOrders(data.orders)
@@ -51,7 +51,7 @@ function AccountPageContent() {
         .catch(() => {})
         .finally(() => setOrdersLoading(false))
 
-      fetch('/api/account')
+      fetch('/api/account', { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
           if (data.customer) setCustomer(data.customer)
@@ -102,7 +102,7 @@ function AccountPageContent() {
       if (!res.ok) throw new Error(data.error || 'Failed to save')
       setAddressMessage('Address saved.')
       setEditingAddress(false)
-      const refreshed = await fetch('/api/account')
+      const refreshed = await fetch('/api/account', { cache: 'no-store' })
       const refreshedData = await refreshed.json()
       if (refreshedData.customer) setCustomer(refreshedData.customer)
     } catch (err: any) {
