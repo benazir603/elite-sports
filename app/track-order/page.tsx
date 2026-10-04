@@ -51,12 +51,12 @@ function getTrackingUrl(courier: string, trackingNumber: string) {
 }
 
 function getActiveStep(order: OrderResult) {
-  const status = order.status
+  const status = order.status.toLowerCase()
   const delivery = order.delivery_status.toLowerCase()
 
   if (status === 'completed' || delivery === 'delivered') return { active: 3, completed: [0, 1, 2, 3] }
-  if (delivery === 'out_for_delivery') return { active: 2, completed: [0, 1] }
-  if (status === 'processing' || delivery === 'shipped') return { active: 1, completed: [0] }
+  if (status === 'out-for-delivery' || status === 'out_for_delivery' || delivery === 'out_for_delivery') return { active: 2, completed: [0, 1] }
+  if (status === 'shipped' || status === 'wc-shipped' || delivery === 'shipped') return { active: 1, completed: [0] }
   return { active: 0, completed: [] }
 }
 
