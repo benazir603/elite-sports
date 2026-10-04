@@ -251,13 +251,35 @@ export async function updateProduct(
 }
 
 export async function findCustomerByEmail(email: string): Promise<{ id: number; email: string; username?: string } | null> {
-  const url = buildUrl('customers', { email, per_page: 1 })
-  const res = await fetch(url, { next: { revalidate: 0 } })
-  if (!res.ok) {
-    return null
+  const lowerEmail = email.toLowerCase()
+
+  // Try direct email filter first
+  try {
+    const url = buildUrl('customers', { email: lowerEmail, per_page: 10 })
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (res.ok) {
+      const customers: { id: number; email: string; username?: string }[] = await res.json()
+      const match = customers.find((c) => c.email.toLowerCase() === lowerEmail)
+      if (match) return match
+    }
+  } catch {
+    // ignore
   }
-  const customers: { id: number; email: string; username?: string }[] = await res.json()
-  return customers[0] || null
+
+  // Fallback: search by email
+  try {
+    const url = buildUrl('customers', { search: lowerEmail, role: 'all', per_page: 10 })
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (res.ok) {
+      const customers: { id: number; email: string; username?: string }[] = await res.json()
+      const match = customers.find((c) => c.email.toLowerCase() === lowerEmail)
+      if (match) return match
+    }
+  } catch {
+    // ignore
+  }
+
+  return null
 }
 
 export async function getCustomerById(id: number): Promise<{
