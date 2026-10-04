@@ -2,12 +2,18 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense, useEffect } from 'react'
 import Header from '../components/Header'
-import { Suspense } from 'react'
+import { useCart } from '../components/CartProvider'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
+  const { clearCart } = useCart()
+
+  useEffect(() => {
+    clearCart()
+  }, [clearCart])
 
   return (
     <>
