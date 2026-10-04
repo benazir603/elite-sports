@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
-import { findCustomerByEmail, createCustomer } from '@/lib/woocommerce'
+import { findCustomerByEmail, createCustomer, sanitizeWooUsername } from '@/lib/woocommerce'
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL?.replace(/\/$/, '')
 
@@ -17,7 +17,7 @@ async function getWooCustomerId(
   try {
     const existing = await findCustomerByEmail(email)
     if (existing) return existing.id
-    const username = `${email.split('@')[0]}-${crypto.randomUUID().slice(0, 8)}`
+    const username = sanitizeWooUsername(email.split('@')[0], crypto.randomUUID().slice(0, 8))
     const newCustomer = await createCustomer({
       email,
       first_name: firstName || email.split('@')[0],

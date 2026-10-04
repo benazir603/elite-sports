@@ -277,6 +277,13 @@ export async function getCustomerById(id: number): Promise<{
   return res.json()
 }
 
+export function sanitizeWooUsername(emailPrefix: string, suffix: string) {
+  return `${emailPrefix}-${suffix}`
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 export async function createCustomer(payload: {
   email: string
   first_name: string
@@ -291,7 +298,8 @@ export async function createCustomer(payload: {
     body: JSON.stringify({ ...payload, role: 'customer' }),
   })
   if (!res.ok) {
-    throw new Error(`WooCommerce create customer failed: ${res.status}`)
+    const text = await res.text()
+    throw new Error(`WooCommerce create customer failed: ${res.status} ${text}`)
   }
   return res.json()
 }

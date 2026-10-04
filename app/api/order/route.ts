@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { createOrder, createCustomer, findCustomerByEmail, getProductById, getProductVariation, updateOrder } from '@/lib/woocommerce'
+import { createOrder, createCustomer, findCustomerByEmail, getProductById, getProductVariation, updateOrder, sanitizeWooUsername } from '@/lib/woocommerce'
 import { createRazorpayOrder } from '@/lib/razorpay'
 
 const MAX_CART_ITEMS = 50
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
           email: sessionEmail,
           first_name: customer.firstName,
           last_name: customer.lastName,
-          username: `${sessionEmail.split('@')[0]}-${crypto.randomUUID().slice(0, 8)}`,
+          username: sanitizeWooUsername(sessionEmail.split('@')[0], crypto.randomUUID().slice(0, 8)),
           password: crypto.randomBytes(32).toString('base64url'),
         })
         customerId = newCustomer.id

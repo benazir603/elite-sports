@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { findCustomerByEmail, createCustomer } from '@/lib/woocommerce'
+import { findCustomerByEmail, createCustomer, sanitizeWooUsername } from '@/lib/woocommerce'
 import { sendVerificationEmail } from '@/lib/email'
 
 function clean(value: unknown, maxLength: number) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       if (wooExisting) {
         wooCustomerId = wooExisting.id
       } else {
-        const username = `${email.split('@')[0]}-${crypto.randomUUID().slice(0, 8)}`
+        const username = sanitizeWooUsername(email.split('@')[0], crypto.randomUUID().slice(0, 8))
         const newCustomer = await createCustomer({
           email,
           first_name: firstName,
