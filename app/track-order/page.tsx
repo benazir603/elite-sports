@@ -54,10 +54,11 @@ function getActiveStep(order: OrderResult) {
   const status = order.status.toLowerCase()
   const delivery = order.delivery_status.toLowerCase()
 
-  if (status === 'completed' || delivery === 'delivered') return { active: 3, completed: [0, 1, 2, 3] }
-  if (status === 'out-for-delivery' || status === 'out_for_delivery' || delivery === 'out_for_delivery') return { active: 2, completed: [0, 1] }
-  if (status === 'shipped' || status === 'wc-shipped' || delivery === 'shipped') return { active: 1, completed: [0] }
-  return { active: 0, completed: [] }
+  if (['cancelled', 'failed', 'refunded'].includes(status)) return { active: -1, completed: [], cancelled: true }
+  if (status === 'completed' || delivery === 'delivered') return { active: 3, completed: [0, 1, 2, 3], cancelled: false }
+  if (status === 'out-for-delivery' || status === 'out_for_delivery' || delivery === 'out_for_delivery') return { active: 2, completed: [0, 1], cancelled: false }
+  if (status === 'shipped' || status === 'wc-shipped' || delivery === 'shipped') return { active: 1, completed: [0], cancelled: false }
+  return { active: 0, completed: [], cancelled: false }
 }
 
 function formatAddress(shipping?: ShippingAddress) {
@@ -177,6 +178,17 @@ function TrackOrderPage() {
               {/* Timeline */}
               <div className="bg-gray-50 rounded-xl p-5">
                 <h2 className="font-bold text-sm uppercase tracking-wide text-gray-700 mb-6">Order Status</h2>
+                {timeline.cancelled ? (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                    <p className="text-red-600 font-bold">Order {order.status}</p>
+                    <p className="text-sm text-gray-500 mt-1">This order has been {order.status}. No shipment will be made.</p>
+                  </div>
+                ) : (
                 <div className="relative flex items-start justify-between">
                   {steps.map((step, index) => {
                     const isCompleted = timeline.completed.includes(index)
@@ -220,6 +232,7 @@ function TrackOrderPage() {
                     )
                   })}
                 </div>
+                )}
               </div>
 
               {/* Tracking details */}
