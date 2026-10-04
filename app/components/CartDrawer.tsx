@@ -31,12 +31,13 @@ export default function CartDrawer() {
           {cart.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg mb-4">Your cart is empty.</p>
-              <button
+              <a
+                href="/"
                 onClick={closeCartDrawer}
-                className="bg-black hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition"
+                className="inline-block bg-black hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition"
               >
                 Continue Shopping
-              </button>
+              </a>
             </div>
           ) : (
             cart.map((item) => (
