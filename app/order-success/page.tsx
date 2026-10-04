@@ -3,12 +3,14 @@
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Suspense, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Header from '../components/Header'
 import { useCart } from '../components/CartProvider'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
+  const { data: session } = useSession()
   const { clearCart } = useCart()
 
   useEffect(() => {
@@ -36,7 +38,7 @@ function SuccessContent() {
 
           <div className="space-y-3">
             <Link
-              href="/track-order"
+              href={`/track-order?id=${orderId}&email=${encodeURIComponent(session?.user?.email || '')}`}
               className="block w-full bg-black hover:bg-red-600 text-white font-bold py-3 rounded-full transition"
             >
               Track Order
