@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSession, signIn } from 'next-auth/react'
 import Header from '../components/Header'
 
 interface ShippingAddress {
@@ -75,6 +76,7 @@ function formatAddress(shipping?: ShippingAddress) {
 
 function TrackOrderPage() {
   const searchParams = useSearchParams()
+  const { data: session, status } = useSession()
   const [orderId, setOrderId] = useState('')
   const [email, setEmail] = useState('')
   const [order, setOrder] = useState<OrderResult | null>(null)
@@ -82,12 +84,18 @@ function TrackOrderPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email)
+    }
+  }, [session])
+
+  useEffect(() => {
     const id = searchParams.get('id')
     const em = searchParams.get('email')
     if (id) setOrderId(id)
-    if (em) setEmail(em)
-    if (id && em) {
-      fetch(`/api/track-order?id=${encodeURIComponent(id)}&email=${encodeURIComponent(em)}`)
+    if (em && !session?.user?.email) setEmail(em)
+    if (id && email) {
+      fetch(`/api/track-order?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`)
         .then(async (res) => {
           const data = await res.json()
           if (!res.ok) throw new Error(data.error || 'Order not found')
@@ -95,7 +103,7 @@ function TrackOrderPage() {
         })
         .catch((err) => setError(err.message || 'Could not find order'))
     }
-  }, [searchParams])
+  }, [searchParams, email, session])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -115,6 +123,44 @@ function TrackOrderPage() {
     }
   }
 
+  if (status === 'loading') {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <p className="text-gray-500">Loading...</p>
+        </main>
+      </>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
+            <h1 className="text-2xl font-black mb-4">Sign in to track your order</h1>
+            <p className="text-gray-600 mb-6">You must be logged in to view your order details.</p>
+            <button
+              type="button"
+              onClick={() => signIn('google', { callbackUrl: '/track-order' })}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:border-red-600 text-gray-700 font-bold py-3 rounded-full transition mb-4"
+            >
+              Continue with Google
+            </button>
+            <a
+              href="/account?redirect=/track-order"
+              className="block w-full bg-black hover:bg-red-600 text-white font-bold py-3 rounded-full transition"
+            >
+              Log in with Email
+            </a>
+          </div>
+        </main>
+      </>
+    )
+  }
+
   const timeline = order ? getActiveStep(order) : null
 
   return (
@@ -123,7 +169,7 @@ function TrackOrderPage() {
       <main className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-8">
           <h1 className="text-2xl font-black text-center mb-2">Track Order</h1>
-          <p className="text-gray-500 text-center text-sm mb-6">Enter your order number and email.</p>
+          <p className="text-gray-500 text-center text-sm mb-6">Enter your order number.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
@@ -141,10 +187,8 @@ function TrackOrderPage() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
-              placeholder="you@example.com"
-              required
+              readOnly
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
             />
             <button
               type="submit"
