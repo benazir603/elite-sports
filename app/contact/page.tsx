@@ -23,7 +23,7 @@ export default function ContactPage() {
             </div>
             <div className="bg-gray-50 rounded-xl p-5">
               <h2 className="font-bold text-gray-900 mb-2">Phone</h2>
-              <p className="text-gray-600">+91 95000 3015</p>
+              <p className="text-gray-600">+91 95000 30150</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-5 sm:col-span-2">
               <h2 className="font-bold text-gray-900 mb-2">Address</h2>
