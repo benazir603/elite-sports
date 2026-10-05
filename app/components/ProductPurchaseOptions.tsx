@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { WooCommerceAttribute, WooCommerceVariation } from '@/lib/woocommerce'
+import { trackEvent } from '@/lib/analytics'
 import { useCart } from './CartProvider'
 
 interface ProductPurchaseOptionsProps {
@@ -52,6 +54,10 @@ function isColourAttribute(attribute: WooCommerceAttribute) {
   return name === 'color' || name === 'colour'
 }
 
+function isSizeAttribute(attribute: WooCommerceAttribute) {
+  return attribute.name.toLowerCase().includes('size')
+}
+
 function colourValue(option: string) {
   return colourValues[option.trim().toLowerCase()] || option.trim().toLowerCase()
 }
@@ -61,6 +67,19 @@ export default function ProductPurchaseOptions({ product, attributes, variations
   const router = useRouter()
   const variationAttributes = attributes.filter((attribute) => attribute.variation)
   const [selections, setSelections] = useState<Record<string, string>>({})
+  const [mainCtaVisible, setMainCtaVisible] = useState(true)
+  const mainCtaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const element = mainCtaRef.current
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      ([entry]) => setMainCtaVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   const selectedVariation = useMemo(() => {
     if (variationAttributes.length === 0) return undefined
@@ -116,8 +135,16 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     const item = selectedCartItem()
     if (!item) return
     addToCart(item)
-    if (buyNow) router.push('/checkout')
+    if (buyNow) {
+      trackEvent('begin_checkout', { value: item.price, currency: 'INR' })
+      router.push('/checkout')
+    }
   }
+
+  const selectionSummary = variationAttributes
+    .map((attribute) => selections[attributeKey(attribute)])
+    .filter(Boolean)
+    .join(' / ')
 
   return (
     <>
@@ -131,7 +158,14 @@ export default function ProductPurchaseOptions({ product, attributes, variations
 
       {variationAttributes.map((attribute) => (
         <fieldset key={attributeKey(attribute)} className="mb-5">
-          <legend className="text-sm font-semibold text-gray-900 mb-2">Select {attribute.name}</legend>
+          <legend className="w-full flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-900">Select {attribute.name}</span>
+            {isSizeAttribute(attribute) && (
+              <Link href="/size-guide" className="text-xs font-semibold text-red-600 hover:underline">
+                Size guide
+              </Link>
+            )}
+          </legend>
           <div className="flex flex-wrap gap-2">
             {attribute.options.map((option) => {
               const selected = selections[attributeKey(attribute)] === option
@@ -157,7 +191,8 @@ export default function ProductPurchaseOptions({ product, attributes, variations
                       style={{ backgroundColor: colourValue(option) }}
                     />
                   )}
-                  {!colour && <span>{option}</span>}
+                  {!colour && <span className={available ? '' : 'line-through'}>{option}</span>}
+                  {!colour && !available && <span className="sr-only">Out of stock</span>}
                 </button>
               )
             })}
@@ -180,7 +215,7 @@ export default function ProductPurchaseOptions({ product, attributes, variations
         {!needsSelection && stockQuantity !== null && <span className="text-gray-500 ml-2">({stockQuantity} units available)</span>}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-8 w-full">
+      <div ref={mainCtaRef} className="flex flex-col sm:flex-row gap-3 mb-8 w-full">
         <button type="button" disabled={needsSelection || !inStock} onClick={() => purchase(false)} className="w-full sm:flex-1 bg-black hover:bg-red-600 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
           Add to Cart
         </button>
@@ -188,6 +223,28 @@ export default function ProductPurchaseOptions({ product, attributes, variations
           Buy Now
         </button>
       </div>
+
+      {/* Sticky mobile add-to-cart bar */}
+      {!mainCtaVisible && (
+        <div className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.12)] pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 leading-tight">{formatMoney(price)}</p>
+              <p className="text-xs text-gray-500 truncate">
+                {needsSelection ? 'Select options' : selectionSummary || (inStock ? 'In stock' : 'Out of stock')}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={needsSelection || !inStock}
+              onClick={() => (needsSelection ? undefined : purchase(false))}
+              className="flex-shrink-0 bg-black hover:bg-red-600 text-white text-sm font-bold uppercase tracking-wide py-2.5 px-6 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {needsSelection ? 'Select Size' : 'Add to Cart'}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

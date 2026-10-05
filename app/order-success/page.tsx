@@ -6,6 +6,7 @@ import { Suspense, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Header from '../components/Header'
 import { useCart } from '../components/CartProvider'
+import { trackEvent } from '@/lib/analytics'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
@@ -14,8 +15,11 @@ function SuccessContent() {
   const { clearCart } = useCart()
 
   useEffect(() => {
+    if (orderId) {
+      trackEvent('purchase', { transaction_id: orderId, currency: 'INR' })
+    }
     clearCart()
-  }, [clearCart])
+  }, [clearCart, orderId])
 
   return (
     <>

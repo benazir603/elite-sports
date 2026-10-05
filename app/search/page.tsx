@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Header from '../components/Header'
 import AddToCartButton from '../components/AddToCartButton'
+import SearchSort from '../components/SearchSort'
+import TrackEvent from '../components/TrackEvent'
 import { getAllProducts } from '@/lib/woocommerce'
 
 function formatMoney(amount: number) {
@@ -8,8 +10,16 @@ function formatMoney(amount: number) {
 }
 
 interface SearchPageProps {
-  searchParams: Promise<{ q?: string | string[] }>
+  searchParams: Promise<{ q?: string | string[]; sort?: string | string[] }>
 }
+
+const QUICK_CATEGORIES = [
+  { label: 'Cricket', href: '/cricket' },
+  { label: 'Football', href: '/football' },
+  { label: 'Badminton', href: '/badminton' },
+  { label: 'Fitness', href: '/fitness' },
+  { label: 'Table Tennis', href: '/table-tennis' },
+]
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
@@ -43,13 +53,17 @@ function searchProducts(products: Awaited<ReturnType<typeof getAllProducts>>, qu
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const { q } = await searchParams
+  const { q, sort } = await searchParams
   const query = String(Array.isArray(q) ? q[0] : q || '').trim()
+  const sortBy = String(Array.isArray(sort) ? sort[0] : sort || 'relevance')
   let products: Awaited<ReturnType<typeof getAllProducts>> = []
   let searchError = false
   if (query) {
     try {
       products = searchProducts(await getAllProducts(), query)
+      if (sortBy === 'price-asc') products.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0))
+      else if (sortBy === 'price-desc') products.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0))
+      else if (sortBy === 'name') products.sort((a, b) => a.name.localeCompare(b.name))
     } catch (error) {
       searchError = true
       console.error('Product search failed:', error)
@@ -72,18 +86,33 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           ) : products.length === 0 ? (
             <div className="text-center py-20 bg-gray-50 rounded-2xl">
               <p className="text-gray-500 text-lg">No products found matching &quot;{query}&quot;.</p>
+              <p className="mt-2 text-sm text-gray-500">Try a different spelling or browse by sport:</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {QUICK_CATEGORIES.map((category) => (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className="px-4 py-2 bg-white border border-gray-200 hover:border-red-600 hover:text-red-600 text-sm font-semibold rounded-full transition"
+                  >
+                    {category.label}
+                  </Link>
+                ))}
+              </div>
               <Link
                 href="/"
-                className="inline-block mt-4 bg-black hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition"
+                className="inline-block mt-6 bg-black hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition"
               >
                 Continue Shopping
               </Link>
             </div>
           ) : (
             <>
-              <p className="mb-6 text-gray-600">
-                Showing <span className="font-bold text-gray-900">{products.length}</span> result{products.length === 1 ? '' : 's'} for <span className="font-bold text-gray-900">&quot;{query}&quot;</span>
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <p className="text-gray-600">
+                  Showing <span className="font-bold text-gray-900">{products.length}</span> result{products.length === 1 ? '' : 's'} for <span className="font-bold text-gray-900">&quot;{query}&quot;</span>
+                </p>
+                <SearchSort query={query} sort={sortBy} />
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {products.map((product) => {
                   const brand = product.categories[0]?.name || 'Elite'
@@ -136,6 +165,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           )}
         </div>
       </main>
+      {query !== '' && <TrackEvent event="search" data={{ search_term: query, result_count: products.length }} />}
     </>
   )
 }

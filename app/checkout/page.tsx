@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import Header from '../components/Header'
 import { useCart } from '../components/CartProvider'
+import { trackEvent } from '@/lib/analytics'
 
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart } = useCart()
@@ -22,6 +23,18 @@ export default function CheckoutPage() {
   const [error, setError] = useState('')
   const [savedCustomer, setSavedCustomer] = useState<any>(null)
   const { data: session, status } = useSession()
+  const checkoutTracked = useRef(false)
+
+  useEffect(() => {
+    if (!checkoutTracked.current && cart.length > 0) {
+      checkoutTracked.current = true
+      trackEvent('begin_checkout', {
+        value: cartTotal,
+        currency: 'INR',
+        items: cart.map((item) => ({ item_id: item.id, item_name: item.name, quantity: item.qty, price: item.price })),
+      })
+    }
+  }, [cart, cartTotal])
 
   useEffect(() => {
     if (session?.user) {

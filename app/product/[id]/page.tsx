@@ -1,11 +1,39 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Header from '@/app/components/Header'
+import PincodeCheck from '@/app/components/PincodeCheck'
 import ProductImageGallery from '@/app/components/ProductImageGallery'
 import ProductPurchaseOptions from '@/app/components/ProductPurchaseOptions'
+import RelatedProducts from '@/app/components/RelatedProducts'
+import TrackEvent from '@/app/components/TrackEvent'
+import { SITE_URL } from '@/lib/site'
 import { getProductById, getProductVariations } from '@/lib/woocommerce'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { id } = await params
+  const product = await getProductById(Number(id))
+  if (!product) return { title: 'Product not found - Elite Sports' }
+
+  const description = product.short_description
+    ? product.short_description.replace(/<[^>]+>/g, '').trim().slice(0, 160)
+    : `Buy ${product.name} online at Elite Sports.`
+
+  return {
+    title: `${product.name} - Elite Sports`,
+    description,
+    alternates: { canonical: `${SITE_URL}/product/${product.id}` },
+    openGraph: {
+      title: product.name,
+      description,
+      type: 'website',
+      images: product.images[0]?.src ? [{ url: product.images[0].src }] : undefined,
+    },
+  }
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -68,10 +96,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
               />
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                <p className="font-bold text-gray-900 mb-1">FREE Delivery</p>
-                <p className="text-sm text-gray-600 mb-2">Order within 2 hours. Eligible for free shipping.</p>
+                <p className="font-bold text-gray-900 mb-1">Delivery</p>
+                <p className="text-sm text-gray-600 mb-2">Delivered in 5-7 days across India. <Link href="/shipping" className="text-red-600 font-semibold hover:underline">Shipping info</Link></p>
                 <p className="text-sm text-gray-600">Sold by <span className="font-medium text-gray-900">Elite Sports</span></p>
-                <p className="text-sm text-gray-500 mt-2">7-day easy returns. Secure transaction.</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  <Link href="/returns" className="text-red-600 font-semibold hover:underline">7-day easy returns</Link>. Secure transaction.
+                </p>
+                <PincodeCheck />
               </div>
 
 
@@ -127,7 +158,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           </div>
         </div>
+
+        <RelatedProducts categoryId={product.categories[0]?.id} excludeId={product.id} />
       </main>
+      <TrackEvent event="view_item" data={{ item_id: product.id, item_name: product.name, price, item_category: brand }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            image: images,
+            description: product.short_description ? product.short_description.replace(/<[^>]+>/g, '').trim() : undefined,
+            sku: product.sku || undefined,
+            brand: { '@type': 'Brand', name: brand },
+            offers: {
+              '@type': 'Offer',
+              url: `${SITE_URL}/product/${product.id}`,
+              priceCurrency: 'INR',
+              price,
+              availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            },
+          }),
+        }}
+      />
     </>
   )
 }

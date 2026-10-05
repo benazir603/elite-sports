@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, ReactNode } from 'react'
+import { trackEvent } from '@/lib/analytics'
 
 export interface CartItem {
   key: string
@@ -79,6 +80,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return prev.map((cartItem) => (cartItem.key === key ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem))
       }
       return [...prev, { ...item, key, qty: 1 }]
+    })
+    trackEvent('add_to_cart', {
+      item_id: item.id,
+      item_name: item.name,
+      item_category: item.brand,
+      price: item.price,
+      variation_id: item.variationId,
     })
     setIsCartDrawerOpen(true)
   }, [])
