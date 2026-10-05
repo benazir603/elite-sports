@@ -144,9 +144,8 @@ function mapWooToProduct(woo: WooCommerceProduct, fallbackCategory: string): Pro
 }
 
 export default function CollectionPage({ category }: CollectionPageProps) {
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name' | 'brand'>('price-asc')
+  const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -183,14 +182,8 @@ export default function CollectionPage({ category }: CollectionPageProps) {
       .finally(() => setLoading(false))
   }, [category])
 
-  const brands = useMemo(() => [...new Set(products.map((p) => p.brand))].sort(), [products])
-
   const filteredProducts = useMemo(() => {
     let result = [...products]
-
-    if (selectedBrands.length > 0) {
-      result = result.filter((p) => selectedBrands.includes(p.brand))
-    }
 
     if (selectedPrice) {
       const range = priceRanges.find((r) => r.label === selectedPrice)
@@ -203,12 +196,11 @@ export default function CollectionPage({ category }: CollectionPageProps) {
       if (sortBy === 'price-asc') return a.price - b.price
       if (sortBy === 'price-desc') return b.price - a.price
       if (sortBy === 'name') return a.name.localeCompare(b.name)
-      if (sortBy === 'brand') return a.brand.localeCompare(b.brand)
       return 0
     })
 
     return result
-  }, [selectedBrands, selectedPrice, sortBy, products])
+  }, [selectedPrice, sortBy, products])
 
   const title = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -222,14 +214,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
     })
   }
 
-  function toggleBrand(brand: string) {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    )
-  }
-
   function clearFilters() {
-    setSelectedBrands([])
     setSelectedPrice(null)
   }
 
@@ -262,14 +247,14 @@ export default function CollectionPage({ category }: CollectionPageProps) {
               <div className="bg-white border border-gray-200 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                   <h2 className="font-bold text-sm uppercase tracking-wide">Filters</h2>
-                  {(selectedBrands.length > 0 || selectedPrice) && (
+                  {selectedPrice && (
                     <button onClick={clearFilters} className="text-xs text-red-600 font-semibold hover:underline">
                       Clear all
                     </button>
                   )}
                 </div>
 
-                <div className="mb-6">
+                <div>
                   <h3 className="font-bold text-sm uppercase tracking-wide mb-3">Price</h3>
                   <div className="space-y-2">
                     {priceRanges.map((range) => (
@@ -282,23 +267,6 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                           className="w-4 h-4 accent-red-600"
                         />
                         <span className="text-sm text-gray-600 group-hover:text-red-600 transition">{range.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-sm uppercase tracking-wide mb-3">Brand</h3>
-                  <div className="space-y-2">
-                    {brands.map((brand) => (
-                      <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={selectedBrands.includes(brand)}
-                          onChange={() => toggleBrand(brand)}
-                          className="w-4 h-4 accent-red-600"
-                        />
-                        <span className="text-sm text-gray-600 group-hover:text-red-600 transition">{brand}</span>
                       </label>
                     ))}
                   </div>
@@ -318,7 +286,6 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
                   <option value="name">Name: A-Z</option>
-                  <option value="brand">Brand</option>
                 </select>
               </div>
 
