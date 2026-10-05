@@ -335,8 +335,8 @@ export default function ShopPage() {
             <h4 className="font-bold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
               <li>elitesportselaiyur@gmail.com</li>
-              <li>+1 (555) 123-4567</li>
-              <li>123 Athlete Ave, New York, NY</li>
+              <li>+91 95000 3015</li>
+              <li>No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Puthur, Tamil Nadu 600126</li>
             </ul>
           </div>
         </div>

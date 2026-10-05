@@ -23,11 +23,11 @@ export default function ContactPage() {
             </div>
             <div className="bg-gray-50 rounded-xl p-5">
               <h2 className="font-bold text-gray-900 mb-2">Phone</h2>
-              <p className="text-gray-600">+1 (555) 123-4567</p>
+              <p className="text-gray-600">+91 95000 3015</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-5 sm:col-span-2">
               <h2 className="font-bold text-gray-900 mb-2">Address</h2>
-              <p className="text-gray-600">123 Athlete Ave, New York, NY</p>
+              <p className="text-gray-600">No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Puthur, Tamil Nadu 600126</p>
             </div>
           </div>
 
