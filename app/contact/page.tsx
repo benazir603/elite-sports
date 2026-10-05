@@ -17,17 +17,17 @@ export default function ContactPage() {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-50 rounded-xl p-5">
-              <h2 className="font-bold text-gray-900 mb-2">Email</h2>
-              <p className="text-gray-600">elitesportselaiyur@gmail.com</p>
+            <div className="bg-gray-50 rounded-xl p-5 sm:col-span-2">
+              <h2 className="font-bold text-gray-900 mb-2">Address</h2>
+              <p className="text-gray-600">No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Puthur, Tamil Nadu 600126</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-5">
               <h2 className="font-bold text-gray-900 mb-2">Phone</h2>
               <p className="text-gray-600">+91 95000 30150</p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-5 sm:col-span-2">
-              <h2 className="font-bold text-gray-900 mb-2">Address</h2>
-              <p className="text-gray-600">No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Puthur, Tamil Nadu 600126</p>
+            <div className="bg-gray-50 rounded-xl p-5">
+              <h2 className="font-bold text-gray-900 mb-2">Email</h2>
+              <p className="text-gray-600">elitesportselaiyur@gmail.com</p>
             </div>
           </div>
 
