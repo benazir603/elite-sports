@@ -44,7 +44,7 @@ export default function CartPage() {
                       }}
                     />
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>
+                      {item.brand && <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>}
                       <h3 className="font-semibold text-gray-900">{item.name}</h3>
                       {item.variation && <p className="text-sm text-gray-500">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                       <p className="font-bold text-red-600">{formatMoney(item.price)}</p>

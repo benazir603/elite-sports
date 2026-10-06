@@ -49,6 +49,19 @@ export interface WooCommerceProduct {
   brands?: { id: number; name: string }[]
 }
 
+export function getProductBrand(product: WooCommerceProduct): string | undefined {
+  const taxonomyBrand = product.brands?.find((brand) => brand.name.trim())?.name.trim()
+  if (taxonomyBrand) return taxonomyBrand
+
+  const brandAttribute = product.attributes?.find((attribute) => {
+    const name = attribute.name.trim().toLowerCase()
+    const slug = attribute.slug?.trim().toLowerCase()
+    return name === 'brand' || name === 'manufacturer' || slug === 'pa_brand' || slug === 'brand'
+  })
+
+  return brandAttribute?.options.find((option) => option.trim())?.trim() || undefined
+}
+
 function getAuthParams() {
   if (!WOOCOMMERCE_CONSUMER_KEY || !WOOCOMMERCE_CONSUMER_SECRET) {
     return ''
@@ -166,9 +179,17 @@ export async function createOrder(payload: WooCommerceOrderPayload): Promise<{ i
   return res.json()
 }
 
+export interface WooCommerceCategory {
+  id: number
+  name: string
+  slug: string
+  parent: number
+  count?: number
+}
+
 export async function getCategories(
   params?: Record<string, string | number | undefined>
-): Promise<{ id: number; name: string; slug: string; parent: number }[]> {
+): Promise<WooCommerceCategory[]> {
   const url = buildUrl('products/categories', { per_page: 100, ...params })
   const res = await fetch(url, { next: { revalidate: 60 } })
   if (!res.ok) {

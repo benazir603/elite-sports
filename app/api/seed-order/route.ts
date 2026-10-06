@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProducts, createProduct, createOrder, updateOrder } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
 async function createSampleOrder(email: string, setDelivered: boolean) {
   let products = await getProducts({ per_page: 1 })
@@ -75,20 +76,14 @@ async function createSampleOrder(email: string, setDelivered: boolean) {
   }
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const email = searchParams.get('email') || 'elitesportselaiyur@gmail.com'
-    const setDelivered = searchParams.get('delivered') === 'true'
-    const result = await createSampleOrder(email, setDelivered)
-    return NextResponse.json(result)
-  } catch (error: any) {
-    console.error('Seed order error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to create sample order' }, { status: 500 })
-  }
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405, headers: { Allow: 'POST' } })
 }
 
 export async function POST(req: NextRequest) {
+  const unauthorized = requireMaintenanceAuth(req)
+  if (unauthorized) return unauthorized
+
   try {
     const { email = 'elitesportselaiyur@gmail.com', setDelivered = false } = (await req.json()) as {
       email?: string

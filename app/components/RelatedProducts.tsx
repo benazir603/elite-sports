@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getProducts, type WooCommerceProduct } from '@/lib/woocommerce'
+import { getProductBrand, getProducts, type WooCommerceProduct } from '@/lib/woocommerce'
 
 function formatMoney(amount: number) {
   return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -28,7 +28,7 @@ export default async function RelatedProducts({ categoryId, excludeId }: Related
       <h2 className="text-xl font-bold text-gray-900 mb-6">Related products</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {related.map((product) => {
-          const brand = product.categories[0]?.name || 'Elite'
+          const brand = getProductBrand(product) || ''
           const price = Number(product.price) || Number(product.regular_price) || 0
           const originalPrice = Number(product.regular_price) || price
           const image = product.images[0]?.src || `https://placehold.co/600x600/f5f5f5/333333.png?text=${encodeURIComponent(product.name)}`
@@ -47,7 +47,7 @@ export default async function RelatedProducts({ categoryId, excludeId }: Related
                 />
               </Link>
               <div className="p-4">
-                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{brand}</p>
+                {brand && <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{brand}</p>}
                 <Link href={`/product/${product.id}`}>
                   <h3 className="mb-2 min-h-[2.5rem] text-sm font-semibold leading-tight text-gray-900 line-clamp-2 hover:underline">
                     {product.name}

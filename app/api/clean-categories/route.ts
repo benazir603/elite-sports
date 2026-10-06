@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getCategories, updateCategory } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
-export async function POST() {
+export async function POST(request: Request) {
+  const unauthorized = requireMaintenanceAuth(request)
+  if (unauthorized) return unauthorized
+
   try {
     const categories = await getCategories({ per_page: 100 })
     const updated: { id: number; oldName: string; newName: string }[] = []

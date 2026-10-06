@@ -14,7 +14,7 @@ export default function ReturnsPage() {
           <h1 className="text-3xl font-black uppercase tracking-tight mb-6">Returns & Exchanges</h1>
           <div className="prose max-w-none text-gray-600">
             <p className="mb-4">
-              We want you to be happy with every purchase. If you are not satisfied, you can return or exchange most items within 30 days of delivery.
+              If you receive a damaged, defective or incorrect item, contact our support team promptly with your order number and supporting photos. Return and exchange eligibility is reviewed based on the product and its condition.
             </p>
             <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Return Conditions</h2>
             <ul className="list-disc pl-5 mb-4 space-y-1">
@@ -24,7 +24,7 @@ export default function ReturnsPage() {
             </ul>
             <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">How to Return</h2>
             <p className="mb-4">
-              Contact our support team through the <a href="/support" className="text-red-600 font-semibold hover:underline">Support</a> page with your order number. We will arrange a pickup and process your refund within 7-10 business days after receiving the item.
+              Contact our support team through the <a href="/support" className="text-red-600 font-semibold hover:underline">Support</a> page with your order number and reason for the request. Our team will review it and provide the next steps.
             </p>
             <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Exchanges</h2>
             <p className="mb-4">

@@ -3,7 +3,7 @@ import Header from '../components/Header'
 import AddToCartButton from '../components/AddToCartButton'
 import SearchSort from '../components/SearchSort'
 import TrackEvent from '../components/TrackEvent'
-import { getAllProducts } from '@/lib/woocommerce'
+import { getAllProducts, getProductBrand } from '@/lib/woocommerce'
 
 function formatMoney(amount: number) {
   return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -34,7 +34,7 @@ function searchProducts(products: Awaited<ReturnType<typeof getAllProducts>>, qu
       const name = normalize(product.name)
       const sku = normalize(product.sku || '')
       const categories = normalize(product.categories.map((category) => category.name).join(' '))
-      const brands = normalize((product.brands || []).map((brand) => brand.name).join(' '))
+      const brands = normalize(getProductBrand(product) || '')
       const searchable = `${name} ${sku} ${categories} ${brands}`
       if (!tokens.every((token) => searchable.includes(token))) return null
 
@@ -115,7 +115,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {products.map((product) => {
-                  const brand = product.categories[0]?.name || 'Elite'
+                  const brand = getProductBrand(product) || ''
                   const price = Number(product.price) || Number(product.regular_price) || 0
                   const originalPrice = Number(product.regular_price) || price
                   const image = product.images[0]?.src || `https://placehold.co/600x600/f5f5f5/333333.png?text=${encodeURIComponent(product.name)}`
@@ -135,7 +135,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         />
                       </Link>
                       <div className="p-4">
-                        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{brand}</p>
+                        {brand && <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{brand}</p>}
                         <Link href={`/product/${product.id}`}>
                           <h3 className="mb-2 min-h-[2.5rem] text-sm font-semibold leading-tight text-gray-900 line-clamp-2 hover:underline">{product.name}</h3>
                         </Link>

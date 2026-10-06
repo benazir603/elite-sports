@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { badmintonProducts } from '../../data/badmintonProducts'
 import { getCategories, createCategory, createProduct } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
 export async function POST(request: NextRequest) {
+  const unauthorized = requireMaintenanceAuth(request)
+  if (unauthorized) return unauthorized
+
   try {
     const categories = await getCategories({ per_page: 100 })
     let badminton = categories.find(

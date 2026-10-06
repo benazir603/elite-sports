@@ -14,11 +14,11 @@ export default function ShippingPage() {
           <h1 className="text-3xl font-black uppercase tracking-tight mb-6">Shipping Info</h1>
           <div className="prose max-w-none text-gray-600">
             <p className="mb-4">
-              We ship across India. Orders are processed within 1-2 business days and delivered within 3-7 business days depending on your location.
+              We ship across India. Delivery availability and estimated time depend on your PIN code, product availability and courier serviceability.
             </p>
-            <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Free Shipping</h2>
+            <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Shipping Charges</h2>
             <p className="mb-4">
-              Free standard shipping is available on all orders over ₹8,300. Orders below this amount are charged a flat shipping fee at checkout.
+              Any applicable shipping charge is shown during checkout before you complete payment.
             </p>
             <h2 className="text-lg font-bold text-gray-900 mt-6 mb-2">Order Tracking</h2>
             <p className="mb-4">

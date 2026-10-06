@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Header from './Header'
 import { useCart } from './CartProvider'
+import { getProductBrand, type WooCommerceProduct } from '@/lib/woocommerce'
 
 interface Product {
   id: number
@@ -15,19 +16,6 @@ interface Product {
   image: string
   images: string[]
   shortDescription?: string
-}
-
-interface WooCommerceProduct {
-  id: number
-  name: string
-  slug: string
-  price: string
-  regular_price: string
-  sale_price: string
-  short_description: string
-  description: string
-  images: { id: number; src: string; alt: string }[]
-  categories: { id: number; name: string; slug: string }[]
 }
 
 interface CollectionPageProps {
@@ -94,13 +82,6 @@ const localProducts: Product[] = [
   ],
 }))
 
-const priceRanges = [
-  { label: 'Under ₹5,000', min: 0, max: 5000 },
-  { label: '₹5,000 - ₹10,000', min: 5000, max: 10000 },
-  { label: '₹10,000 - ₹15,000', min: 10000, max: 15000 },
-  { label: 'Over ₹15,000', min: 15000, max: Infinity },
-]
-
 const subCategories: Record<string, string[]> = {
   cricket: ['Bats / Balls', 'Batting gloves', 'Pads', 'Helmet', 'Guards', 'Cricket accessories'],
   football: ['Footballs', 'Studs', 'Shin Guards', 'Goalkeeper Gloves', 'Accessories'],
@@ -114,6 +95,13 @@ const subCategories: Record<string, string[]> = {
   'other-items': ['Sports Trophies & Medals', 'School Sports Equipment', 'Sports Accessories'],
   badminton: ['Rackets', 'Shuttlecocks', 'Strings & Gutting', 'Grip', 'Shoes', 'Accessories'],
 }
+
+const priceRanges = [
+  { label: 'Under ₹5,000', min: 0, max: 5000 },
+  { label: '₹5,000 - ₹10,000', min: 5000, max: 10000 },
+  { label: '₹10,000 - ₹15,000', min: 10000, max: 15000 },
+  { label: 'Over ₹15,000', min: 15000, max: Infinity },
+]
 
 function formatMoney(amount: number) {
   return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -133,7 +121,7 @@ function mapWooToProduct(woo: WooCommerceProduct, fallbackCategory: string): Pro
   return {
     id: woo.id,
     name: woo.name,
-    brand: woo.categories[0]?.name || 'Elite',
+    brand: getProductBrand(woo) || '',
     category: fallbackCategory,
     price,
     originalPrice: regularPrice,
@@ -151,6 +139,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [zoom, setZoom] = useState(1)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const { addToCart: addToCartContext } = useCart()
 
   useEffect(() => {
@@ -173,11 +162,11 @@ export default function CollectionPage({ category }: CollectionPageProps) {
         if (Array.isArray(data) && data.length > 0) {
           setProducts(data.map((item) => mapWooToProduct(item, category)))
         } else {
-          setProducts(localProducts.filter((p) => p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
+          setProducts(localProducts.filter((product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
         }
       })
       .catch(() => {
-        setProducts(localProducts.filter((p) => p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
+        setProducts(localProducts.filter((product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
       })
       .finally(() => setLoading(false))
   }, [category])
@@ -245,8 +234,24 @@ export default function CollectionPage({ category }: CollectionPageProps) {
             {/* Sidebar filters */}
             <aside className="w-full lg:w-64 flex-shrink-0">
               <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-                  <h2 className="font-bold text-sm uppercase tracking-wide">Filters</h2>
+                <div className="flex items-center justify-between lg:mb-4 lg:pb-4 lg:border-b lg:border-gray-100">
+                  <button
+                    onClick={() => setMobileFiltersOpen((open) => !open)}
+                    aria-expanded={mobileFiltersOpen}
+                    className="flex items-center gap-2 font-bold text-sm uppercase tracking-wide lg:cursor-default lg:pointer-events-none"
+                  >
+                    <svg className="w-5 h-5 lg:hidden" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    Filters
+                    {selectedPrice && <span className="w-2 h-2 rounded-full bg-red-600 lg:hidden" />}
+                    <svg
+                      className={`w-4 h-4 lg:hidden transition-transform ${mobileFiltersOpen ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                   {selectedPrice && (
                     <button onClick={clearFilters} className="text-xs text-red-600 font-semibold hover:underline">
                       Clear all
@@ -254,7 +259,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                   )}
                 </div>
 
-                <div>
+                <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block mt-4 lg:mt-0 pt-4 lg:pt-0 border-t border-gray-100 lg:border-0`}>
                   <h3 className="font-bold text-sm uppercase tracking-wide mb-3">Price</h3>
                   <div className="space-y-2">
                     {priceRanges.map((range) => (
@@ -329,7 +334,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                         </div>
                       </div>
                       <div className="p-4 flex flex-col flex-1">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{product.brand}</p>
+                        {product.brand && <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{product.brand}</p>}
                         <Link href={`/product/${product.id}`} className="block">
                           <h3 className="text-sm font-semibold text-gray-900 mb-1 leading-tight line-clamp-2 min-h-[2.5rem] hover:underline">{product.name}</h3>
                         </Link>

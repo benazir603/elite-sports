@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getProducts, updateProduct } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
 export async function POST(request: Request) {
+  const unauthorized = requireMaintenanceAuth(request)
+  if (unauthorized) return unauthorized
+
   try {
     const body = await request.json()
     const { id, name, short_description, description, ...rest } = body

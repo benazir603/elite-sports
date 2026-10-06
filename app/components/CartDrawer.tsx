@@ -51,7 +51,7 @@ export default function CartDrawer() {
                   }}
                 />
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>
+                  {item.brand && <p className="text-xs font-bold text-gray-500 uppercase">{item.brand}</p>}
                   <h4 className="font-bold text-sm leading-tight mb-1">{item.name}</h4>
                   {item.variation && <p className="text-xs text-gray-500">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                   <p className="font-bold text-red-600">{formatMoney(item.price)}</p>

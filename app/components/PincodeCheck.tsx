@@ -9,7 +9,7 @@ interface CheckResult {
   message?: string
 }
 
-export default function PincodeCheck() {
+export default function PincodeCheck({ weight }: { weight: number }) {
   const [pincode, setPincode] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<CheckResult | null>(null)
@@ -23,14 +23,28 @@ export default function PincodeCheck() {
     setLoading(true)
     setResult(null)
     try {
-      const res = await fetch(`/api/pincode-check?pincode=${encodeURIComponent(value)}`)
+      const params = new URLSearchParams({ pincode: value, weight: String(weight) })
+      const res = await fetch(`/api/pincode-check?${params.toString()}`, { cache: 'no-store' })
       const data = await res.json()
-      setResult(data)
+      setResult({
+        serviceable: res.ok && data.serviceable === true,
+        eta: data.eta,
+        courier: data.courier,
+        message: data.message,
+      })
     } catch {
       setResult({ serviceable: false, message: 'Could not check delivery right now. Please try again.' })
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!Number.isFinite(weight) || weight <= 0) {
+    return (
+      <p className="mt-3 text-sm font-semibold text-amber-700">
+        Online delivery check is unavailable for this product. Please contact support for delivery assistance.
+      </p>
+    )
   }
 
   return (

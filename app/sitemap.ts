@@ -5,11 +5,19 @@ import { getAllProducts } from '@/lib/woocommerce'
 const CATEGORY_SLUGS = [
   'badminton',
   'cricket',
+  'football',
+  'basketball',
+  'carrom-chess',
+  'table-tennis',
+  'fitness',
+  'volleyball',
+  'sports-footwear-apparel',
+  'swimming',
+  'other-items',
   'tennis',
   'pickleball',
   'shoes',
   'squash',
-  'swimming',
   'other-sports',
   'apparels',
   'accessories',
@@ -28,11 +36,17 @@ const STATIC_ROUTES = [
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticEntries: MetadataRoute.Sitemap = [...STATIC_ROUTES, ...CATEGORY_SLUGS].map((route) => ({
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
     url: `${SITE_URL}${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: route === '' ? 1 : 0.7,
+  }))
+  const categoryEntries: MetadataRoute.Sitemap = CATEGORY_SLUGS.map((slug) => ({
+    url: `${SITE_URL}/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.7,
   }))
 
   try {
@@ -43,8 +57,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.8,
     }))
-    return [...staticEntries, ...productEntries]
+    return [...staticEntries, ...categoryEntries, ...productEntries]
   } catch {
-    return staticEntries
+    return [...staticEntries, ...categoryEntries]
   }
 }

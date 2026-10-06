@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { getCategories, createCategory } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
 interface CatalogRow {
   Catageroy?: string
@@ -17,7 +18,10 @@ function normalizeForMatch(name: string): string {
   return name.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const unauthorized = requireMaintenanceAuth(request)
+  if (unauthorized) return unauthorized
+
   try {
     const raw = await readFile('catalog.json', 'utf-8')
     const rows = JSON.parse(raw) as CatalogRow[]

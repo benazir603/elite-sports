@@ -107,10 +107,10 @@ export default function ShopPage() {
       <section className="bg-gray-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { title: 'Free Shipping', desc: 'On all orders over ₹8,300', path: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
-            { title: 'Authentic Guarantee', desc: '100% verified products', path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-            { title: 'Easy Returns', desc: '30-day return policy', path: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-            { title: 'Expert Support', desc: 'Live chat 24/7', path: 'M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { title: 'Pan-India Delivery', desc: 'Shipping shown at checkout', path: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
+            { title: 'Secure Payments', desc: 'Payments powered by Razorpay', path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { title: 'Order Tracking', desc: 'Track orders from your account', path: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+            { title: 'Product Support', desc: 'Phone and WhatsApp assistance', path: 'M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
           ].map((item) => (
             <div key={item.title} className="flex flex-col items-center">
               <svg className="w-8 h-8 text-red-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +143,7 @@ export default function ShopPage() {
               {
                 name: 'Badminton',
                 href: '/badminton',
-                image: 'https://images.unsplash.com/photo-1626224583764-8478ab2e1538?auto=format&fit=crop&w=800&q=80',
+                image: 'https://images.unsplash.com/photo-1708312604109-16c0be9326cd?auto=format&fit=crop&w=800&q=80',
                 tag: 'Rackets & Shuttlecocks',
               },
               {
@@ -213,8 +213,8 @@ export default function ShopPage() {
               className="group relative h-80 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition"
             >
               <img
-                src="https://images.unsplash.com/photo-1613918228405-96e96ff524de?auto=format&fit=crop&w=1000&q=80"
-                alt="Badminton essentials"
+                src="https://images.unsplash.com/photo-1708312604109-16c0be9326cd?auto=format&fit=crop&w=1200&q=85"
+                alt="Professional badminton racket and shuttlecock equipment"
                 loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105"
                 onError={(e) => (e.currentTarget.src = 'https://placehold.co/1000x600/1f2937/ffffff?text=Badminton+Essentials')}
@@ -263,15 +263,15 @@ export default function ShopPage() {
       <section className="py-20 bg-red-600 text-white">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <p className="uppercase tracking-widest text-sm font-bold text-red-200 mb-2">Limited Time</p>
-            <h2 className="text-3xl md:text-5xl font-black leading-tight">Season Sale — Up to 40% Off</h2>
-            <p className="text-red-100 mt-3 max-w-lg">Grab pro-level gear at unbeatable prices. On selected rackets, bats, shoes and apparel.</p>
+            <p className="uppercase tracking-widest text-sm font-bold text-red-200 mb-2">Elite Sports</p>
+            <h2 className="text-3xl md:text-5xl font-black leading-tight">Gear Up for Your Game</h2>
+            <p className="text-red-100 mt-3 max-w-lg">Explore equipment, footwear and accessories for every level of athlete.</p>
           </div>
           <a
             href="/badminton"
             className="flex-shrink-0 bg-white text-red-600 font-black uppercase tracking-wide px-10 py-4 rounded-full hover:bg-gray-100 transition shadow-lg"
           >
-            Shop the Sale
+            Shop Collection
           </a>
         </div>
       </section>
@@ -289,7 +289,7 @@ export default function ShopPage() {
             <p className="text-red-500 font-bold uppercase tracking-widest text-sm mb-2">New Drop</p>
             <h2 className="text-4xl md:text-5xl font-black mb-6">Court Royalty Collection</h2>
             <p className="text-gray-300 mb-8 leading-relaxed">
-              Dominate every game with lightweight uppers, responsive cushioning, and grip that keeps you in control. Limited stock available for this season.
+              Explore sports footwear designed for comfort, support and reliable grip across training and competition.
             </p>
             <a
               href="#shop"
@@ -309,17 +309,24 @@ export default function ShopPage() {
               Elite<span className="text-red-600">Sports</span>
             </a>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Premium performance sneakers and athletic gear for athletes who refuse to settle for average.
+              Sports equipment, footwear and accessories for athletes of every level.
             </p>
           </div>
           <div>
             <h4 className="font-bold mb-4">Shop</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li><a href="#shop" className="hover:text-white transition">Men</a></li>
-              <li><a href="#shop" className="hover:text-white transition">Women</a></li>
-              <li><a href="#shop" className="hover:text-white transition">Kids</a></li>
-              <li><a href="#shop" className="hover:text-white transition">New Arrivals</a></li>
-              <li><a href="#shop" className="hover:text-white transition">Sale</a></li>
+              {[
+                { name: 'Badminton', slug: 'badminton' },
+                { name: 'Cricket', slug: 'cricket' },
+                { name: 'Football', slug: 'football' },
+                { name: 'Table Tennis', slug: 'table-tennis' },
+                { name: 'Fitness', slug: 'fitness' },
+                { name: 'Swimming', slug: 'swimming' },
+              ].map((category) => (
+                <li key={category.slug}>
+                  <a href={`/${category.slug}`} className="hover:text-white transition">{category.name}</a>
+                </li>
+              ))}
             </ul>
           </div>
           <div>

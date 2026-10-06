@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   },
   description:
     "Shop badminton, cricket, football, fitness and sports equipment online at Elite Sports, Selaiyur, Chennai. Genuine gear, fast delivery across India.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   alternates: { canonical: SITE_URL },
   openGraph: {
     siteName: SITE_NAME,

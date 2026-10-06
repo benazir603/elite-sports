@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { getProducts, updateProduct } from '@/lib/woocommerce'
+import { requireMaintenanceAuth } from '@/lib/maintenance-auth'
 
 function parseLine(line: string): string[] {
   const fields: string[] = []
@@ -46,7 +47,10 @@ function parseCsv(text: string): Record<string, string>[] {
   return rows
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const unauthorized = requireMaintenanceAuth(request)
+  if (unauthorized) return unauthorized
+
   try {
     const filePath = path.join(process.cwd(), 'woocommerce-products.csv')
     const text = await fs.readFile(filePath, 'utf-8')

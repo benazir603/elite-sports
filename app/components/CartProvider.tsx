@@ -84,7 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     trackEvent('add_to_cart', {
       item_id: item.id,
       item_name: item.name,
-      item_category: item.brand,
+      item_brand: item.brand || undefined,
       price: item.price,
       variation_id: item.variationId,
     })
