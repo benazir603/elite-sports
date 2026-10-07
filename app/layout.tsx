@@ -22,6 +22,18 @@ export const metadata: Metadata = {
   },
   description:
     "Shop badminton, cricket, football, fitness and sports equipment online at Elite Sports, Selaiyur, Chennai. Genuine gear, fast delivery across India.",
+  keywords: [
+    "sports equipment online India",
+    "badminton racket online",
+    "cricket bat online",
+    "sports shop Chennai",
+    "Elite Sports Selaiyur",
+    "badminton accessories",
+    "cricket equipment",
+    "sports store Tambaram",
+    "buy sports gear online",
+    "Yonex badminton racket India",
+  ],
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",

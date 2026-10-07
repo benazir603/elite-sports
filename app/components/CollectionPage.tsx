@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Header from './Header'
 import { useCart } from './CartProvider'
 import { getProductBrand, type WooCommerceProduct } from '@/lib/woocommerce'
+import { SUBCATEGORIES, findSubCategory } from '@/lib/categories'
 
 interface Product {
   id: number
@@ -20,6 +21,7 @@ interface Product {
 
 interface CollectionPageProps {
   category: string
+  subcategory?: string
 }
 
 const localProducts: Product[] = [
@@ -82,20 +84,6 @@ const localProducts: Product[] = [
   ],
 }))
 
-const subCategories: Record<string, string[]> = {
-  cricket: ['Bats / Balls', 'Batting gloves', 'Pads', 'Helmet', 'Guards', 'Cricket accessories'],
-  football: ['Footballs', 'Studs', 'Shin Guards', 'Goalkeeper Gloves', 'Accessories'],
-  basketball: ['Balls', 'Accessories'],
-  'carrom-chess': ['Carrom Boards', 'Coins & Strikers', 'Chess Boards'],
-  'table-tennis': ['Bats', 'Balls', 'Rubbers', 'Accessories'],
-  fitness: ['Dumbbells', 'Kettlebells', 'Resistance Bands', 'Yoga Mats', 'Skipping Ropes', 'Fitness Accessories'],
-  volleyball: ['Balls', 'Nets', 'Accessories'],
-  'sports-footwear-apparel': ['Non-Marking Shoes', 'Running Shoes', 'Sportswear', 'Gym Wear'],
-  swimming: ['Costumes', 'Caps', 'Goggles', 'Accessories'],
-  'other-items': ['Sports Trophies & Medals', 'School Sports Equipment', 'Sports Accessories'],
-  badminton: ['Rackets', 'Shuttlecocks', 'Strings & Gutting', 'Grip', 'Shoes', 'Accessories'],
-}
-
 const priceRanges = [
   { label: 'Under ₹5,000', min: 0, max: 5000 },
   { label: '₹5,000 - ₹10,000', min: 5000, max: 10000 },
@@ -131,20 +119,21 @@ function mapWooToProduct(woo: WooCommerceProduct, fallbackCategory: string): Pro
   }
 }
 
-export default function CollectionPage({ category }: CollectionPageProps) {
+export default function CollectionPage({ category, subcategory }: CollectionPageProps) {
+  const activeSub = subcategory ? findSubCategory(category, subcategory) : undefined
+  const subLinks = SUBCATEGORIES[category] || []
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [zoom, setZoom] = useState(1)
+  const [cardImageIndex, setCardImageIndex] = useState<Record<number, number>>({})
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const { addToCart: addToCartContext } = useCart()
 
   useEffect(() => {
     setSelectedImageIndex(0)
-    setZoom(1)
   }, [selectedProduct])
 
   const currentProductImages = useMemo(() => {
@@ -156,20 +145,32 @@ export default function CollectionPage({ category }: CollectionPageProps) {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/products?category=${encodeURIComponent(category)}`)
+    const apiCategory = activeSub ? activeSub.wooSlugs.join(',') : category
+    const matchesLocal = (product: Product) => {
+      if (product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') !== category) return false
+      if (!activeSub) return true
+      const keywords = activeSub.name
+        .toLowerCase()
+        .split(/[^a-z]+/)
+        .filter((w) => w.length > 2 && w !== 'and')
+        .map((w) => w.replace(/s$/, ''))
+      const haystack = `${product.name} ${product.category}`.toLowerCase()
+      return keywords.length === 0 || keywords.some((k) => haystack.includes(k))
+    }
+    fetch(`/api/products?category=${encodeURIComponent(apiCategory)}`)
       .then((res) => res.json())
       .then((data: WooCommerceProduct[] | { error: string }) => {
         if (Array.isArray(data) && data.length > 0) {
           setProducts(data.map((item) => mapWooToProduct(item, category)))
         } else {
-          setProducts(localProducts.filter((product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
+          setProducts(localProducts.filter(matchesLocal))
         }
       })
       .catch(() => {
-        setProducts(localProducts.filter((product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category))
+        setProducts(localProducts.filter(matchesLocal))
       })
       .finally(() => setLoading(false))
-  }, [category])
+  }, [category, subcategory])
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
@@ -191,7 +192,7 @@ export default function CollectionPage({ category }: CollectionPageProps) {
     return result
   }, [selectedPrice, sortBy, products])
 
-  const title = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const title = (activeSub ? activeSub.name : category.replace(/-/g, ' ')).replace(/\b\w/g, (c) => c.toUpperCase())
 
   function addToCart(product: Product) {
     addToCartContext({
@@ -211,18 +212,28 @@ export default function CollectionPage({ category }: CollectionPageProps) {
     <>
       <Header />
       <main className="min-h-screen bg-white">
-        {subCategories[category] && (
+        {subLinks.length > 0 && (
           <div className="border-b border-gray-200">
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex flex-wrap gap-2">
-                {subCategories[category].map((sub) => (
-                  <a
-                    key={sub}
-                    href={`#${sub.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                    className="px-4 py-2 bg-gray-100 hover:bg-red-600 hover:text-white text-sm font-semibold rounded-full transition"
+                <Link
+                  href={`/${category}`}
+                  className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
+                    !activeSub ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-red-600 hover:text-white'
+                  }`}
+                >
+                  All
+                </Link>
+                {subLinks.map((sub) => (
+                  <Link
+                    key={sub.slug}
+                    href={`/${category}/${sub.slug}`}
+                    className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
+                      activeSub?.slug === sub.slug ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-red-600 hover:text-white'
+                    }`}
                   >
-                    {sub}
-                  </a>
+                    {sub.name}
+                  </Link>
                 ))}
               </div>
             </div>
@@ -230,6 +241,20 @@ export default function CollectionPage({ category }: CollectionPageProps) {
         )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
+          <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-2">
+            <Link href="/" className="hover:text-red-600">Home</Link>
+            <span className="mx-1.5">/</span>
+            {activeSub ? (
+              <>
+                <Link href={`/${category}`} className="hover:text-red-600">{category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</Link>
+                <span className="mx-1.5">/</span>
+                <span className="text-gray-900 font-semibold">{activeSub.name}</span>
+              </>
+            ) : (
+              <span className="text-gray-900 font-semibold">{title}</span>
+            )}
+          </nav>
+          <h1 className="text-2xl font-black uppercase tracking-tight mb-5">{title}</h1>
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar filters */}
             <aside className="w-full lg:w-64 flex-shrink-0">
@@ -315,7 +340,10 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                       <div className="relative aspect-square bg-gray-50 overflow-hidden">
                         <Link href={`/product/${product.id}`} className="block w-full h-full">
                           <img
-                            src={getProductImage(product, category)}
+                            src={
+                              product.images.filter(Boolean)[cardImageIndex[product.id] || 0] ||
+                              getProductImage(product, category)
+                            }
                             alt={product.name}
                             className="w-full h-full object-contain transition duration-500 group-hover:scale-105"
                             loading="lazy"
@@ -324,6 +352,36 @@ export default function CollectionPage({ category }: CollectionPageProps) {
                             }}
                           />
                         </Link>
+                        {product.images.filter(Boolean).length > 1 && (
+                          <>
+                            <button
+                              onClick={() =>
+                                setCardImageIndex((current) => {
+                                  const total = product.images.filter(Boolean).length
+                                  const index = current[product.id] || 0
+                                  return { ...current, [product.id]: index === 0 ? total - 1 : index - 1 }
+                                })
+                              }
+                              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition opacity-0 group-hover:opacity-100"
+                              aria-label="Previous image"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <button
+                              onClick={() =>
+                                setCardImageIndex((current) => {
+                                  const total = product.images.filter(Boolean).length
+                                  const index = current[product.id] || 0
+                                  return { ...current, [product.id]: index === total - 1 ? 0 : index + 1 }
+                                })
+                              }
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition opacity-0 group-hover:opacity-100"
+                              aria-label="Next image"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                          </>
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none">
                           <button
                             onClick={() => setSelectedProduct(product)}
@@ -367,69 +425,91 @@ export default function CollectionPage({ category }: CollectionPageProps) {
 
       {selectedProduct && (
         <div
-          className="fixed inset-0 z-[70] bg-black/95 flex flex-col items-center justify-center p-4"
+          className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
           onClick={() => setSelectedProduct(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Quick view: ${selectedProduct.name}`}
         >
-          <button
-            onClick={(e) => { e.stopPropagation(); setSelectedProduct(null) }}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition"
-            aria-label="Close"
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-
-          {currentProductImages.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev === 0 ? currentProductImages.length - 1 : prev - 1)) }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition"
-                aria-label="Previous image"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev === currentProductImages.length - 1 ? 0 : prev + 1)) }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition"
-                aria-label="Next image"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </>
-          )}
-
-          <img
-            src={currentImage}
-            alt={selectedProduct.name}
-            className="max-w-full max-h-[80vh] object-contain transition-transform duration-300"
-            style={{ transform: `scale(${zoom})` }}
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
-            onError={(e) => { e.currentTarget.src = 'https://placehold.co/400x400/f5f5f5/333333.png?text=No+Image' }}
-          />
+          >
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-3 right-3 z-10 p-2 bg-white hover:bg-gray-100 text-gray-700 rounded-full shadow transition"
+              aria-label="Close quick view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
 
-          <div className="flex items-center gap-4 mt-6">
-            {currentProductImages.length > 1 && (
-              <span className="text-sm text-white/80 font-medium">
-                {selectedImageIndex + 1} / {currentProductImages.length}
-              </span>
-            )}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.max(0.5, z - 0.25)) }}
-                className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full font-bold"
-                aria-label="Zoom out"
-              >
-                -
-              </button>
-              <span className="text-sm font-medium w-12 text-center text-white">{Math.round(zoom * 100)}%</span>
-              <button
-                onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.min(3, z + 0.25)) }}
-                className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full font-bold"
-                aria-label="Zoom in"
-              >
-                +
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {/* Image */}
+              <div className="relative bg-gray-50 aspect-square">
+                <img
+                  src={currentImage}
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-contain p-4"
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/400x400/f5f5f5/333333.png?text=No+Image' }}
+                />
+                {currentProductImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev === 0 ? currentProductImages.length - 1 : prev - 1))}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition"
+                      aria-label="Previous image"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev === currentProductImages.length - 1 ? 0 : prev + 1))}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition"
+                      aria-label="Next image"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <span className="absolute bottom-2 right-3 text-xs text-gray-500 font-medium">
+                      {selectedImageIndex + 1} / {currentProductImages.length}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="p-6 flex flex-col">
+                {selectedProduct.brand && (
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{selectedProduct.brand}</p>
+                )}
+                <h3 className="text-lg font-semibold text-gray-900 leading-snug mb-3">{selectedProduct.name}</h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl font-bold text-red-600">{formatMoney(selectedProduct.price)}</span>
+                  {selectedProduct.originalPrice > selectedProduct.price && (
+                    <span className="text-sm text-gray-400 line-through">{formatMoney(selectedProduct.originalPrice)}</span>
+                  )}
+                </div>
+                {selectedProduct.shortDescription && (
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-4 mb-5">
+                    {selectedProduct.shortDescription.replace(/<\/?[^>]+>/g, '')}
+                  </p>
+                )}
+                <div className="mt-auto space-y-2">
+                  <button
+                    onClick={() => { addToCart(selectedProduct); setSelectedProduct(null) }}
+                    className="w-full bg-black hover:bg-red-600 text-white text-sm font-bold uppercase tracking-wide py-3 rounded-full transition"
+                  >
+                    Add to Cart
+                  </button>
+                  <Link
+                    href={`/product/${selectedProduct.id}`}
+                    onClick={() => setSelectedProduct(null)}
+                    className="block w-full text-center border border-gray-300 hover:border-red-600 text-gray-800 hover:text-red-600 text-sm font-bold uppercase tracking-wide py-3 rounded-full transition"
+                  >
+                    View full details
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

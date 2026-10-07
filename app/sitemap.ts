@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 import { getAllProducts } from '@/lib/woocommerce'
+import { SUBCATEGORIES } from '@/lib/categories'
 
 const CATEGORY_SLUGS = [
   'badminton',
@@ -48,6 +49,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly',
     priority: 0.7,
   }))
+  const subCategoryEntries: MetadataRoute.Sitemap = Object.entries(SUBCATEGORIES).flatMap(
+    ([parent, subs]) =>
+      subs.map((sub) => ({
+        url: `${SITE_URL}/${parent}/${sub.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+  )
 
   try {
     const products = await getAllProducts()
@@ -57,8 +67,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.8,
     }))
-    return [...staticEntries, ...categoryEntries, ...productEntries]
+    return [...staticEntries, ...categoryEntries, ...subCategoryEntries, ...productEntries]
   } catch {
-    return [...staticEntries, ...categoryEntries]
+    return [...staticEntries, ...categoryEntries, ...subCategoryEntries]
   }
 }

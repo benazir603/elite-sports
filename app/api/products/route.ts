@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (category) {
-      const products = await getProductsByCategorySlug(category)
+      const products = await getProductsByCategorySlug(category.split(',').filter(Boolean))
       return NextResponse.json(products)
     }
     const products = await getProducts({ per_page: 100 })

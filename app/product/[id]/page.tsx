@@ -61,6 +61,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         .filter((s) => s.length > 0)
     : []
 
+  const infoAttributes = (product.attributes || []).filter(
+    (attribute) => attribute.visible !== false && attribute.options?.length
+  )
+  const colourAttribute = infoAttributes.find(
+    (attribute) => !attribute.variation && /colou?r/i.test(attribute.name)
+  )
+
   return (
     <>
       <Header />
@@ -116,6 +123,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 }}
                 attributes={product.attributes || []}
                 variations={variations}
+                colourOptions={colourAttribute?.options}
               />
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
@@ -139,6 +147,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         <td className="py-2">{product.sku}</td>
                       </tr>
                     )}
+                    {infoAttributes.map((attribute) => (
+                      <tr key={attribute.id || attribute.name} className="border-b">
+                        <th className="py-2 pr-4 font-medium text-gray-900 w-40">{attribute.name}</th>
+                        <td className="py-2">{attribute.options.join(', ')}</td>
+                      </tr>
+                    ))}
                     <tr className="border-b">
                       <th className="py-2 pr-4 font-medium text-gray-900 w-40">Stock Status</th>
                       <td className="py-2">{inStock ? 'In stock' : 'Out of stock'}</td>

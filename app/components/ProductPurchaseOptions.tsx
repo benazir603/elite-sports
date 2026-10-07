@@ -20,6 +20,7 @@ interface ProductPurchaseOptionsProps {
   }
   attributes: WooCommerceAttribute[]
   variations: WooCommerceVariation[]
+  colourOptions?: string[]
 }
 
 function formatMoney(amount: number) {
@@ -62,7 +63,7 @@ function colourValue(option: string) {
   return colourValues[option.trim().toLowerCase()] || option.trim().toLowerCase()
 }
 
-export default function ProductPurchaseOptions({ product, attributes, variations }: ProductPurchaseOptionsProps) {
+export default function ProductPurchaseOptions({ product, attributes, variations, colourOptions }: ProductPurchaseOptionsProps) {
   const { addToCart } = useCart()
   const router = useRouter()
   const variationAttributes = attributes.filter((attribute) => attribute.variation)
@@ -155,6 +156,23 @@ export default function ProductPurchaseOptions({ product, attributes, variations
           {discount > 0 && <span className="text-sm font-medium text-green-700">Save {formatMoney(discount)} ({discountPercent}%)</span>}
         </div>
       </div>
+
+      {colourOptions && colourOptions.length > 0 && (
+        <div className="mb-5">
+          <p className="text-sm font-semibold text-gray-900 mb-2">Colour</p>
+          <div className="flex flex-wrap gap-2">
+            {colourOptions.map((option) => (
+              <span
+                key={option}
+                title={option}
+                aria-label={option}
+                className="h-7 w-7 rounded-full border border-gray-300 shadow-sm ring-1 ring-black/5"
+                style={{ backgroundColor: colourValue(option) }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {variationAttributes.map((attribute) => (
         <fieldset key={attributeKey(attribute)} className="mb-5">

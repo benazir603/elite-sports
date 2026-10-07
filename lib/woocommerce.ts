@@ -135,10 +135,11 @@ export async function getProductVariation(productId: number, variationId: number
   return res.json()
 }
 
-export async function getProductsByCategorySlug(slug: string): Promise<WooCommerceProduct[]> {
+export async function getProductsByCategorySlug(slug: string | string[]): Promise<WooCommerceProduct[]> {
+  const slugs = Array.isArray(slug) ? slug : [slug]
   const products = await getProducts({ per_page: 100 })
   return products.filter((product) =>
-    product.categories.some((category) => category.slug === slug)
+    product.categories.some((category) => slugs.includes(category.slug))
   )
 }
 
