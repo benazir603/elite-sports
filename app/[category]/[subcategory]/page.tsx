@@ -51,5 +51,5 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SubCategoryPage({ params }: PageProps) {
   const { category, subcategory } = await params
-  return <CollectionPage category={category} subcategory={subcategory} />
+  return <CollectionPage key={`${category}:${subcategory}`} category={category} subcategory={subcategory} />
 }

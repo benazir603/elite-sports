@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import CollectionPage from '../components/CollectionPage'
 import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES } from '@/lib/categories'
 import { SITE_URL } from '@/lib/site'
+import { getProductsByCategorySlug, type WooCommerceProduct } from '@/lib/woocommerce'
 
 interface PageProps {
   params: Promise<{ category: string }>
@@ -43,6 +44,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function CategoryPage({ params }: PageProps) {
-  const { category } = await params
-  return <CollectionPage category={category} />
+  const { category: rawCategory } = await params
+  const category = rawCategory.trim().toLowerCase()
+  let products: WooCommerceProduct[] = []
+
+  try {
+    const response = await getProductsByCategorySlug(category)
+    products = Array.isArray(response) ? response : []
+  } catch {
+    products = []
+  }
+
+  return <CollectionPage key={category} category={category} initialProducts={products} />
 }

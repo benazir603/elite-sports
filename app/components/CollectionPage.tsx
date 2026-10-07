@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Header from './Header'
 import { useCart } from './CartProvider'
@@ -22,7 +22,10 @@ interface Product {
 interface CollectionPageProps {
   category: string
   subcategory?: string
+  initialProducts?: WooCommerceProduct[]
 }
+
+const EMPTY_WOO_PRODUCTS: WooCommerceProduct[] = []
 
 const localProducts: Product[] = [
   { id: 1, name: 'Nike Air Zoom Pegasus 40', brand: 'Nike', category: 'Running', price: 140, originalPrice: 190, image: '', images: [] },
@@ -34,8 +37,6 @@ const localProducts: Product[] = [
   { id: 7, name: 'Nike LeBron 20', brand: 'Nike', category: 'Basketball', price: 200, originalPrice: 260, image: '', images: [] },
   { id: 23, name: 'Basketball', brand: 'Spalding', category: 'Basketball', price: 120, originalPrice: 170, image: '', images: [] },
   { id: 24, name: 'Basketball Accessories', brand: 'Elite', category: 'Basketball', price: 80, originalPrice: 120, image: '', images: [] },
-  { id: 8, name: 'Converse Chuck 70 Plus', brand: 'Converse', category: 'Lifestyle', price: 95, originalPrice: 120, image: '', images: [] },
-  { id: 9, name: 'Adidas Adizero Adios Pro 3', brand: 'Adidas', category: 'Running', price: 230, originalPrice: 280, image: '', images: [] },
   { id: 10, name: 'Football', brand: 'Nike', category: 'Football', price: 150, originalPrice: 190, image: '', images: [] },
   { id: 19, name: 'Studs', brand: 'Adidas', category: 'Football', price: 120, originalPrice: 160, image: '', images: [] },
   { id: 20, name: 'Shin Guards', brand: 'Puma', category: 'Football', price: 80, originalPrice: 120, image: '', images: [] },
@@ -65,8 +66,6 @@ const localProducts: Product[] = [
   { id: 46, name: 'Swimming Cap', brand: 'Elite', category: 'Swimming', price: 150, originalPrice: 250, image: '', images: [] },
   { id: 47, name: 'Swimming Goggles', brand: 'Elite', category: 'Swimming', price: 350, originalPrice: 500, image: '', images: [] },
   { id: 48, name: 'Swimming Accessories', brand: 'Elite', category: 'Swimming', price: 250, originalPrice: 400, image: '', images: [] },
-  { id: 11, name: 'Nike Zoom Metcon Turbo 2', brand: 'Nike', category: 'Training', price: 170, originalPrice: 220, image: '', images: [] },
-
   { id: 55, name: 'AXFORCE TIGER - 5U', brand: 'Elite', category: 'Badminton', price: 0, originalPrice: 0, image: '', images: [] },
   { id: 13, name: 'Cricket Bat', brand: 'Elite', category: 'Cricket', price: 2500, originalPrice: 3200, image: '', images: [] },
   { id: 14, name: 'Cricket Ball', brand: 'Elite', category: 'Cricket', price: 400, originalPrice: 600, image: '', images: [] },
@@ -74,15 +73,33 @@ const localProducts: Product[] = [
   { id: 16, name: 'Cricket Helmet', brand: 'Elite', category: 'Cricket', price: 2200, originalPrice: 2800, image: '', images: [] },
   { id: 17, name: 'Cricket Guard', brand: 'Elite', category: 'Cricket', price: 350, originalPrice: 500, image: '', images: [] },
   { id: 18, name: 'Cricket Accessories', brand: 'Elite', category: 'Cricket', price: 650, originalPrice: 900, image: '', images: [] },
-].map((p) => ({
-  ...p,
-  image: `https://placehold.co/600x600/f5f5f5/111827.png?text=${encodeURIComponent(p.name)}`,
+].map((product) => ({
+  ...product,
+  image: `https://placehold.co/600x600/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}`,
   images: [
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(p.name)}+1`,
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(p.name)}+2`,
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(p.name)}+3`,
+    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+1`,
+    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+2`,
+    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+3`,
   ],
 }))
+
+function getLocalProducts(category: string, subcategoryName?: string): Product[] {
+  const categoryProducts = localProducts.filter(
+    (product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category
+  )
+  if (!subcategoryName) return categoryProducts
+
+  const keywords = subcategoryName
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter((word) => word.length > 2 && word !== 'and')
+    .map((word) => word.replace(/s$/, ''))
+  const matching = categoryProducts.filter((product) => {
+    const name = product.name.toLowerCase()
+    return keywords.some((keyword) => name.includes(keyword))
+  })
+  return matching.length > 0 ? matching : categoryProducts
+}
 
 const priceRanges = [
   { label: 'Under ₹5,000', min: 0, max: 5000 },
@@ -102,39 +119,72 @@ function getProductImage(product: Product, category: string) {
   return `https://placehold.co/600x600/f5f5f5/111827.png?text=${text}`
 }
 
-function mapWooToProduct(woo: WooCommerceProduct, fallbackCategory: string): Product {
+function mapWooToProduct(woo: WooCommerceProduct, fallbackCategory: string): Product | null {
+  if (!woo || !Number.isFinite(Number(woo.id)) || typeof woo.name !== 'string') return null
   const price = Number(woo.price) || 0
   const regularPrice = Number(woo.regular_price) || price
-  const firstImage = woo.images[0]?.src || ''
+  const images = Array.isArray(woo.images)
+    ? woo.images.map((image) => image?.src).filter((src): src is string => Boolean(src))
+    : []
   return {
-    id: woo.id,
+    id: Number(woo.id),
     name: woo.name,
-    brand: getProductBrand(woo) || '',
+    brand: getProductBrand({ ...woo, attributes: Array.isArray(woo.attributes) ? woo.attributes : [] }) || '',
     category: fallbackCategory,
     price,
     originalPrice: regularPrice,
-    image: firstImage,
-    images: woo.images.map((img) => img.src),
-    shortDescription: woo.short_description || '',
+    image: images[0] || '',
+    images,
+    shortDescription: typeof woo.short_description === 'string' ? woo.short_description : '',
   }
 }
 
-export default function CollectionPage({ category, subcategory }: CollectionPageProps) {
+function mapWooProducts(products: WooCommerceProduct[], category: string): Product[] {
+  return products
+    .map((product) => mapWooToProduct(product, category))
+    .filter((product): product is Product => product !== null)
+}
+
+function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" role="status" aria-label="Loading products">
+      {Array.from({ length: 8 }, (_, index) => (
+        <div key={index} className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="product-shimmer aspect-square" />
+          <div className="space-y-3 p-4">
+            <div className="h-2.5 w-1/3 product-shimmer rounded-full" />
+            <div className="space-y-2">
+              <div className="h-3.5 w-full product-shimmer rounded-full" />
+              <div className="h-3.5 w-3/4 product-shimmer rounded-full" />
+            </div>
+            <div className="h-4 w-2/5 product-shimmer rounded-full" />
+            <div className="h-9 w-full product-shimmer rounded-full" />
+          </div>
+        </div>
+      ))}
+      <span className="sr-only">Loading products…</span>
+    </div>
+  )
+}
+
+export default function CollectionPage({ category, subcategory, initialProducts = EMPTY_WOO_PRODUCTS }: CollectionPageProps) {
   const activeSub = subcategory ? findSubCategory(category, subcategory) : undefined
   const subLinks = SUBCATEGORIES[category] || []
+  const apiCategory = activeSub ? activeSub.wooSlugs.join(',') : category
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<Product[]>(() => mapWooProducts(initialProducts, category))
+  const [loading, setLoading] = useState(initialProducts.length === 0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [cardImageIndex, setCardImageIndex] = useState<Record<number, number>>({})
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const { addToCart: addToCartContext } = useCart()
 
-  useEffect(() => {
+  function openQuickView(product: Product) {
     setSelectedImageIndex(0)
-  }, [selectedProduct])
+    setSelectedProduct(product)
+  }
 
   const currentProductImages = useMemo(() => {
     if (!selectedProduct) return []
@@ -144,33 +194,32 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
   const currentImage = currentProductImages[selectedImageIndex] || 'https://placehold.co/400x400/f5f5f5/333333.png?text=No+Image'
 
   useEffect(() => {
-    setLoading(true)
-    const apiCategory = activeSub ? activeSub.wooSlugs.join(',') : category
-    const matchesLocal = (product: Product) => {
-      if (product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') !== category) return false
-      if (!activeSub) return true
-      const keywords = activeSub.name
-        .toLowerCase()
-        .split(/[^a-z]+/)
-        .filter((w) => w.length > 2 && w !== 'and')
-        .map((w) => w.replace(/s$/, ''))
-      const haystack = `${product.name} ${product.category}`.toLowerCase()
-      return keywords.length === 0 || keywords.some((k) => haystack.includes(k))
-    }
-    fetch(`/api/products?category=${encodeURIComponent(apiCategory)}`)
-      .then((res) => res.json())
-      .then((data: WooCommerceProduct[] | { error: string }) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data.map((item) => mapWooToProduct(item, category)))
-        } else {
-          setProducts(localProducts.filter(matchesLocal))
+    if (initialProducts.length > 0) return
+
+    const controller = new AbortController()
+
+    async function loadProducts() {
+      try {
+        const response = await fetch(`/api/products?category=${encodeURIComponent(apiCategory)}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error('Product request failed')
+        const data: unknown = await response.json()
+        const safeProducts = Array.isArray(data) ? data as WooCommerceProduct[] : []
+        const mappedProducts = mapWooProducts(safeProducts, category)
+        setProducts(mappedProducts.length > 0 ? mappedProducts : getLocalProducts(category, activeSub?.name))
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          setProducts(getLocalProducts(category, activeSub?.name))
         }
-      })
-      .catch(() => {
-        setProducts(localProducts.filter(matchesLocal))
-      })
-      .finally(() => setLoading(false))
-  }, [category, subcategory])
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+
+    loadProducts()
+    return () => controller.abort()
+  }, [activeSub?.name, apiCategory, category, initialProducts.length])
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
@@ -310,7 +359,7 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
                 <p className="text-gray-500 text-sm">{filteredProducts.length} results</p>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'price-asc' | 'price-desc' | 'name')}
                   className="px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-red-600"
                 >
                   <option value="price-asc">Price: Low to High</option>
@@ -320,9 +369,7 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
               </div>
 
               {loading ? (
-                <div className="text-center py-20 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">Loading products...</p>
-                </div>
+                <ProductGridSkeleton />
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-lg">
                   <p className="text-gray-500">No products match your filters.</p>
@@ -331,8 +378,9 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredProducts.map((product) => (
+                <Suspense fallback={<ProductGridSkeleton />}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredProducts.map((product) => (
                     <div
                       key={product.id}
                       className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition duration-300 flex flex-col h-full"
@@ -384,7 +432,7 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
                         )}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none">
                           <button
-                            onClick={() => setSelectedProduct(product)}
+                            onClick={() => openQuickView(product)}
                             className="bg-white text-black text-xs font-bold uppercase tracking-wide py-2 px-4 rounded-full hover:bg-gray-900 hover:text-white transition pointer-events-auto shadow"
                           >
                             Quick view
@@ -415,8 +463,9 @@ export default function CollectionPage({ category, subcategory }: CollectionPage
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </Suspense>
               )}
             </div>
           </div>

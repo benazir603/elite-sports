@@ -62,13 +62,6 @@ export function getProductBrand(product: WooCommerceProduct): string | undefined
   return brandAttribute?.options.find((option) => option.trim())?.trim() || undefined
 }
 
-function getAuthParams() {
-  if (!WOOCOMMERCE_CONSUMER_KEY || !WOOCOMMERCE_CONSUMER_SECRET) {
-    return ''
-  }
-  return `consumer_key=${encodeURIComponent(WOOCOMMERCE_CONSUMER_KEY)}&consumer_secret=${encodeURIComponent(WOOCOMMERCE_CONSUMER_SECRET)}`;
-}
-
 function buildUrl(endpoint: string, params?: Record<string, string | number | undefined>) {
   if (!WOOCOMMERCE_URL) {
     throw new Error('WOOCOMMERCE_URL is not set')
@@ -136,10 +129,17 @@ export async function getProductVariation(productId: number, variationId: number
 }
 
 export async function getProductsByCategorySlug(slug: string | string[]): Promise<WooCommerceProduct[]> {
-  const slugs = Array.isArray(slug) ? slug : [slug]
-  const products = await getProducts({ per_page: 100 })
+  const slugs = (Array.isArray(slug) ? slug : [slug])
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+  if (slugs.length === 0) return []
+
+  const response = await getProducts({ per_page: 100 })
+  const products = Array.isArray(response) ? response : []
   return products.filter((product) =>
-    product.categories.some((category) => slugs.includes(category.slug))
+    Array.isArray(product.categories) && product.categories.some((category) =>
+      typeof category.slug === 'string' && slugs.includes(category.slug.toLowerCase())
+    )
   )
 }
 
