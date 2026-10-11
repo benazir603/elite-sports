@@ -100,3 +100,7 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
 export function findSubCategory(parentSlug: string, subSlug: string): SubCategory | undefined {
   return SUBCATEGORIES[parentSlug]?.find((s) => s.slug === subSlug)
 }
+
+// Categories that are live with real products. All others render a
+// "Coming Soon" page. Add a slug here once that category is stocked.
+export const LIVE_CATEGORIES = new Set<string>(['badminton'])

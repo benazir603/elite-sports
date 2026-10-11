@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import CollectionPage from '../components/CollectionPage'
-import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES } from '@/lib/categories'
+import ComingSoon from '../components/ComingSoon'
+import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES, LIVE_CATEGORIES } from '@/lib/categories'
 import { SITE_URL } from '@/lib/site'
 import { getProductsByCategorySlug, type WooCommerceProduct } from '@/lib/woocommerce'
 
@@ -46,6 +47,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CategoryPage({ params }: PageProps) {
   const { category: rawCategory } = await params
   const category = rawCategory.trim().toLowerCase()
+
+  if (!LIVE_CATEGORIES.has(category)) {
+    return <ComingSoon title={categoryTitle(category)} />
+  }
+
   let products: WooCommerceProduct[] = []
 
   try {

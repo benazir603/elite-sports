@@ -68,6 +68,19 @@ export default function ProductPurchaseOptions({ product, attributes, variations
   const router = useRouter()
   const variationAttributes = attributes.filter((attribute) => attribute.variation)
   const [selections, setSelections] = useState<Record<string, string>>({})
+  const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery')
+  const fulfilmentHydrated = useRef(false)
+
+  useEffect(() => {
+    if (!fulfilmentHydrated.current) {
+      fulfilmentHydrated.current = true
+      if (window.localStorage.getItem('elite-fulfilment') === 'pickup') {
+        setFulfilment('pickup')
+        return
+      }
+    }
+    window.localStorage.setItem('elite-fulfilment', fulfilment)
+  }, [fulfilment])
   const [mainCtaVisible, setMainCtaVisible] = useState(true)
   const mainCtaRef = useRef<HTMLDivElement>(null)
 
@@ -233,7 +246,7 @@ export default function ProductPurchaseOptions({ product, attributes, variations
         {!needsSelection && stockQuantity !== null && <span className="text-gray-500 ml-2">({stockQuantity} units available)</span>}
       </div>
 
-      <div ref={mainCtaRef} className="flex flex-col sm:flex-row gap-3 mb-8 w-full">
+      <div ref={mainCtaRef} className="flex flex-col sm:flex-row gap-3 mb-4 w-full">
         <button type="button" disabled={needsSelection || !inStock} onClick={() => purchase(false)} className="w-full sm:flex-1 bg-black hover:bg-red-600 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
           Add to Cart
         </button>
@@ -241,6 +254,41 @@ export default function ProductPurchaseOptions({ product, attributes, variations
           Buy Now
         </button>
       </div>
+
+      {/* Delivery / pickup options */}
+      <fieldset className="mb-8">
+        <legend className="sr-only">Choose delivery method</legend>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${fulfilment === 'delivery' ? 'border-red-600 bg-red-50 ring-1 ring-red-200' : 'border-gray-300 bg-white hover:border-red-500'}`}>
+            <input
+              type="radio"
+              name="fulfilment"
+              value="delivery"
+              checked={fulfilment === 'delivery'}
+              onChange={() => setFulfilment('delivery')}
+              className="mt-0.5 accent-red-600"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">Home Delivery</span>
+              <span className="block text-xs text-gray-500 mt-0.5">Shipped across India</span>
+            </span>
+          </label>
+          <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${fulfilment === 'pickup' ? 'border-red-600 bg-red-50 ring-1 ring-red-200' : 'border-gray-300 bg-white hover:border-red-500'}`}>
+            <input
+              type="radio"
+              name="fulfilment"
+              value="pickup"
+              checked={fulfilment === 'pickup'}
+              onChange={() => setFulfilment('pickup')}
+              className="mt-0.5 accent-red-600"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">Customer Pickup</span>
+              <span className="block text-xs text-gray-500 mt-0.5">Collect from our Chennai store</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
 
       {/* Sticky mobile add-to-cart bar */}
       {!mainCtaVisible && (

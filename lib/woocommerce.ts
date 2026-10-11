@@ -162,7 +162,8 @@ export interface WooCommerceOrderPayload {
   set_paid: boolean
   customer_id: number
   billing: BillingShipping
-  shipping: BillingShipping
+  shipping?: BillingShipping
+  shipping_lines?: { method_id: string; method_title: string; total: string }[]
   line_items: { product_id: number; quantity: number; variation_id?: number; subtotal?: string; total?: string }[]
   meta_data?: { key: string; value: string }[]
 }

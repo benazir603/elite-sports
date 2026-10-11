@@ -22,8 +22,20 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [savedCustomer, setSavedCustomer] = useState<any>(null)
+  const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery')
   const { data: session, status } = useSession()
   const checkoutTracked = useRef(false)
+
+  useEffect(() => {
+    if (window.localStorage.getItem('elite-fulfilment') === 'pickup') {
+      setFulfilment('pickup')
+    }
+  }, [])
+
+  function changeFulfilment(method: 'delivery' | 'pickup') {
+    setFulfilment(method)
+    window.localStorage.setItem('elite-fulfilment', method)
+  }
 
   useEffect(() => {
     if (!checkoutTracked.current && cart.length > 0) {
@@ -103,7 +115,7 @@ export default function CheckoutPage() {
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart, customer: form }),
+        body: JSON.stringify({ cart, customer: form, fulfilment }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Order failed')
@@ -243,7 +255,48 @@ export default function CheckoutPage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <h1 className="text-2xl font-black uppercase tracking-tight mb-6">Checkout</h1>
 
-            {savedCustomer?.shipping && (savedCustomer.shipping.address_1 || savedCustomer.shipping.city) && (
+            <fieldset className="mb-6">
+              <legend className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Fulfilment method</legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${fulfilment === 'delivery' ? 'border-red-600 bg-red-50 ring-1 ring-red-200' : 'border-gray-300 bg-white hover:border-red-500'}`}>
+                  <input
+                    type="radio"
+                    name="checkout-fulfilment"
+                    value="delivery"
+                    checked={fulfilment === 'delivery'}
+                    onChange={() => changeFulfilment('delivery')}
+                    className="mt-0.5 accent-red-600"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">Home Delivery</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Shipped across India</span>
+                  </span>
+                </label>
+                <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${fulfilment === 'pickup' ? 'border-red-600 bg-red-50 ring-1 ring-red-200' : 'border-gray-300 bg-white hover:border-red-500'}`}>
+                  <input
+                    type="radio"
+                    name="checkout-fulfilment"
+                    value="pickup"
+                    checked={fulfilment === 'pickup'}
+                    onChange={() => changeFulfilment('pickup')}
+                    className="mt-0.5 accent-red-600"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">Customer Pickup</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Collect from our Chennai store — no shipping address needed</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            {fulfilment === 'pickup' && (
+              <div className="border border-gray-200 bg-gray-50 rounded-xl p-4 mb-6">
+                <p className="text-sm font-semibold text-gray-900">Pickup location</p>
+                <p className="text-sm text-gray-600">Elite Sports, Selaiyur, Chennai — we will contact you when your order is ready for collection.</p>
+              </div>
+            )}
+
+            {fulfilment === 'delivery' && savedCustomer?.shipping && (savedCustomer.shipping.address_1 || savedCustomer.shipping.city) && (
               <div className="border border-red-200 bg-red-50 rounded-xl p-4 mb-6">
                 <p className="text-xs font-bold uppercase tracking-wide text-red-600 mb-2">Saved Delivery Address</p>
                 <p className="text-sm text-gray-800 font-semibold">
@@ -298,50 +351,54 @@ export default function CheckoutPage() {
                 placeholder="Phone"
                 className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
               />
-              <textarea
-                required
-                value={form.address}
-                onChange={(e) => updateField('address', e.target.value)}
-                placeholder="Address"
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
-                rows={3}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  required
-                  type="text"
-                  value={form.city}
-                  onChange={(e) => updateField('city', e.target.value)}
-                  placeholder="City"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
-                />
-                <input
-                  required
-                  type="text"
-                  value={form.state}
-                  onChange={(e) => updateField('state', e.target.value)}
-                  placeholder="State"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  required
-                  type="text"
-                  value={form.postcode}
-                  onChange={(e) => updateField('postcode', e.target.value)}
-                  placeholder="Postcode"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
-                />
-                <input
-                  required
-                  type="text"
-                  value={form.country}
-                  onChange={(e) => updateField('country', e.target.value)}
-                  placeholder="Country"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
-                />
-              </div>
+              {fulfilment === 'delivery' && (
+                <>
+                  <textarea
+                    required
+                    value={form.address}
+                    onChange={(e) => updateField('address', e.target.value)}
+                    placeholder="Address"
+                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
+                    rows={3}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      required
+                      type="text"
+                      value={form.city}
+                      onChange={(e) => updateField('city', e.target.value)}
+                      placeholder="City"
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
+                    />
+                    <input
+                      required
+                      type="text"
+                      value={form.state}
+                      onChange={(e) => updateField('state', e.target.value)}
+                      placeholder="State"
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      required
+                      type="text"
+                      value={form.postcode}
+                      onChange={(e) => updateField('postcode', e.target.value)}
+                      placeholder="Postcode"
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
+                    />
+                    <input
+                      required
+                      type="text"
+                      value={form.country}
+                      onChange={(e) => updateField('country', e.target.value)}
+                      placeholder="Country"
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-red-600"
+                    />
+                  </div>
+                </>
+              )}
               {error && <p className="text-red-600 text-sm font-semibold">{error}</p>}
               <button
                 type="submit"
@@ -381,6 +438,9 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>{formatMoney(cartTotal)}</span>
                 </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  {fulfilment === 'pickup' ? 'Fulfilment: Customer pickup — Chennai store' : 'Fulfilment: Home delivery'}
+                </p>
               </>
             )}
           </div>

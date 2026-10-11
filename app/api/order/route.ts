@@ -23,7 +23,7 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
-function parseCustomer(value: unknown, sessionEmail: string): CheckoutCustomer | null {
+function parseCustomer(value: unknown, sessionEmail: string, isPickup: boolean): CheckoutCustomer | null {
   if (!value || typeof value !== 'object') return null
   const input = value as Record<string, unknown>
   const customer = {
@@ -38,7 +38,10 @@ function parseCustomer(value: unknown, sessionEmail: string): CheckoutCustomer |
     country: clean(input.country, 2).toUpperCase(),
   }
 
-  if (!customer.firstName || !customer.lastName || !customer.phone || !customer.address || !customer.city || !customer.state || !customer.postcode || customer.country !== 'IN') {
+  if (!customer.firstName || !customer.lastName || !customer.phone || customer.country !== 'IN') {
+    return null
+  }
+  if (!isPickup && (!customer.address || !customer.city || !customer.state || !customer.postcode)) {
     return null
   }
   return customer
@@ -76,8 +79,9 @@ export async function POST(request: NextRequest) {
   let wooOrderId: number | null = null
   try {
     const body = await request.json()
+    const isPickup = body.fulfilment === 'pickup'
     const cart = parseCart(body.cart)
-    const customer = parseCustomer(body.customer, sessionEmail)
+    const customer = parseCustomer(body.customer, sessionEmail, isPickup)
     if (!cart) {
       return NextResponse.json({ error: 'Your cart is invalid' }, { status: 400 })
     }
@@ -157,9 +161,14 @@ export async function POST(request: NextRequest) {
       set_paid: false,
       customer_id: customerId,
       billing: { ...address, email: sessionEmail, phone: customer.phone },
-      shipping: address,
+      ...(isPickup
+        ? { shipping_lines: [{ method_id: 'local_pickup', method_title: 'Customer Pickup — Chennai Store', total: '0.00' }] }
+        : { shipping: address }),
       line_items: lineItems,
-      meta_data: [{ key: '_elite_payment_owner', value: sessionEmail }],
+      meta_data: [
+        { key: '_elite_payment_owner', value: sessionEmail },
+        { key: '_elite_fulfilment', value: isPickup ? 'pickup' : 'delivery' },
+      ],
     })
     wooOrderId = order.id
     const orderTotal = Number(order.total)

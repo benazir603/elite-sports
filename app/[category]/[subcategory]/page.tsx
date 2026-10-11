@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import CollectionPage from '../../components/CollectionPage'
-import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES, findSubCategory } from '@/lib/categories'
+import ComingSoon from '../../components/ComingSoon'
+import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES, LIVE_CATEGORIES, findSubCategory } from '@/lib/categories'
 import { SITE_URL } from '@/lib/site'
 
 interface PageProps {
@@ -51,5 +52,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SubCategoryPage({ params }: PageProps) {
   const { category, subcategory } = await params
-  return <CollectionPage key={`${category}:${subcategory}`} category={category} subcategory={subcategory} />
+  const normalizedCategory = category.trim().toLowerCase()
+
+  if (!LIVE_CATEGORIES.has(normalizedCategory)) {
+    const sub = findSubCategory(normalizedCategory, subcategory.trim().toLowerCase())
+    return <ComingSoon title={sub ? `${sub.name} — ${categoryTitle(normalizedCategory)}` : categoryTitle(normalizedCategory)} />
+  }
+
+  return <CollectionPage key={`${normalizedCategory}:${subcategory}`} category={normalizedCategory} subcategory={subcategory} />
 }
