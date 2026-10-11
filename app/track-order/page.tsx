@@ -31,10 +31,12 @@ interface OrderResult {
   tracking_number: string
   courier: string
   delivery_status: string
+  fulfilment: string
   shipping?: ShippingAddress
 }
 
-const steps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered']
+const deliverySteps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered']
+const pickupSteps = ['Order Placed', 'Picked Up']
 
 function formatMoney(amount: string) {
   return '₹' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -56,6 +58,10 @@ function getActiveStep(order: OrderResult) {
   const delivery = order.delivery_status.toLowerCase()
 
   if (['cancelled', 'failed', 'refunded'].includes(status)) return { active: -1, completed: [], cancelled: true }
+  if (order.fulfilment === 'pickup') {
+    if (status === 'completed') return { active: 1, completed: [0, 1], cancelled: false }
+    return { active: 0, completed: [], cancelled: false }
+  }
   if (status === 'completed' || delivery === 'delivered') return { active: 3, completed: [0, 1, 2, 3], cancelled: false }
   if (status === 'out-for-delivery' || status === 'out_for_delivery' || delivery === 'out_for_delivery') return { active: 2, completed: [0, 1], cancelled: false }
   if (status === 'shipped' || status === 'wc-shipped' || delivery === 'shipped') return { active: 1, completed: [0], cancelled: false }
@@ -162,6 +168,8 @@ function TrackOrderPage() {
   }
 
   const timeline = order ? getActiveStep(order) : null
+  const isPickup = order?.fulfilment === 'pickup'
+  const steps = isPickup ? pickupSteps : deliverySteps
 
   return (
     <>
@@ -281,8 +289,18 @@ function TrackOrderPage() {
 
               {/* Tracking details */}
               <div className="border border-gray-200 rounded-xl p-4">
-                <h2 className="font-bold text-sm uppercase tracking-wide text-gray-700 mb-3">Shipment Details</h2>
-                {order.tracking_number || order.courier ? (
+                <h2 className="font-bold text-sm uppercase tracking-wide text-gray-700 mb-3">
+                  {isPickup ? 'Pickup Details' : 'Shipment Details'}
+                </h2>
+                {isPickup ? (
+                  <div className="text-sm text-gray-600">
+                    <p className="mb-2">This order is for <span className="font-semibold text-gray-900">customer pickup</span> — it will not be shipped.</p>
+                    <p className="mb-2">Collect your order from: <span className="font-semibold text-gray-900">Elite Sports, Selaiyur, Chennai</span></p>
+                    <p>
+                      For reference, your order ID is: <span className="font-bold text-gray-900">#{order.id}</span>
+                    </p>
+                  </div>
+                ) : order.tracking_number || order.courier ? (
                   <>
                     <div className="grid sm:grid-cols-2 gap-4 text-sm mb-4">
                       {order.courier && (

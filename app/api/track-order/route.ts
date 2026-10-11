@@ -23,6 +23,10 @@ export async function GET(request: NextRequest) {
     }
 
     const meta = Object.fromEntries((order.meta_data || []).map((m) => [m.key, m.value]))
+    const shippingLines = (order as any).shipping_lines || []
+    const fulfilment =
+      meta._elite_fulfilment ||
+      (shippingLines.some((line: any) => String(line?.method_id || '').includes('local_pickup')) ? 'pickup' : 'delivery')
 
     return NextResponse.json({
       id: order.id,
@@ -33,6 +37,7 @@ export async function GET(request: NextRequest) {
       tracking_number: meta.tracking_number || '',
       courier: meta.courier || '',
       delivery_status: meta.delivery_status || '',
+      fulfilment,
       shipping: order.shipping,
     })
   } catch (error: any) {
