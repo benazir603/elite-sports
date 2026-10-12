@@ -211,7 +211,7 @@ export default function ProductPurchaseOptions({ product, attributes, variations
       {variationAttributes.map((attribute) => (
         <fieldset key={attributeKey(attribute)} className="mb-5">
           <legend className="w-full flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-gray-900" aria-live={isColourAttribute(attribute) ? 'polite' : undefined}>
               {isColourAttribute(attribute)
                 ? `Colour: ${selections[attributeKey(attribute)] || 'Select colour'}`
                 : `Select ${attribute.name}`}
