@@ -21,6 +21,7 @@ interface ProductPurchaseOptionsProps {
   attributes: WooCommerceAttribute[]
   variations: WooCommerceVariation[]
   colourOptions?: string[]
+  galleryImages?: string[]
 }
 
 function formatMoney(amount: number) {
@@ -29,25 +30,6 @@ function formatMoney(amount: number) {
 
 function attributeKey(attribute: { id: number; name: string }) {
   return attribute.id ? String(attribute.id) : attribute.name.toLowerCase()
-}
-
-const colourValues: Record<string, string> = {
-  black: '#000000',
-  blue: '#2563eb',
-  brown: '#92400e',
-  gold: '#d4af37',
-  gray: '#6b7280',
-  green: '#16a34a',
-  grey: '#6b7280',
-  navy: '#172554',
-  'navy blue': '#172554',
-  orange: '#f97316',
-  pink: '#ec4899',
-  purple: '#9333ea',
-  red: '#dc2626',
-  silver: '#c0c0c0',
-  white: '#ffffff',
-  yellow: '#facc15',
 }
 
 function isColourAttribute(attribute: WooCommerceAttribute) {
@@ -59,15 +41,27 @@ function isSizeAttribute(attribute: WooCommerceAttribute) {
   return attribute.name.toLowerCase().includes('size')
 }
 
-function colourValue(option: string) {
-  return colourValues[option.trim().toLowerCase()] || option.trim().toLowerCase()
+function searchableWords(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter((word) => word.length > 2)
 }
 
-export default function ProductPurchaseOptions({ product, attributes, variations, colourOptions }: ProductPurchaseOptionsProps) {
+export default function ProductPurchaseOptions({ product, attributes, variations, colourOptions, galleryImages = [] }: ProductPurchaseOptionsProps) {
   const { addToCart } = useCart()
   const router = useRouter()
   const variationAttributes = attributes.filter((attribute) => attribute.variation)
-  const [selections, setSelections] = useState<Record<string, string>>({})
+  const [selections, setSelections] = useState<Record<string, string>>(() => {
+    const colourAttribute = variationAttributes.find(isColourAttribute)
+    if (!colourAttribute) return {}
+    const firstAvailable = variations.find(
+      (variation) => variation.purchasable && variation.status === 'publish' && variation.stock_status === 'instock'
+    )
+    const colour = firstAvailable?.attributes.find((attribute) => /colou?r/i.test(attribute.name))?.option
+    return colour ? { [attributeKey(colourAttribute)]: colour } : {}
+  })
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery')
   const fulfilmentHydrated = useRef(false)
 
@@ -75,8 +69,8 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     if (!fulfilmentHydrated.current) {
       fulfilmentHydrated.current = true
       if (window.localStorage.getItem('elite-fulfilment') === 'pickup') {
-        setFulfilment('pickup')
-        return
+        const frame = window.requestAnimationFrame(() => setFulfilment('pickup'))
+        return () => window.cancelAnimationFrame(frame)
       }
     }
     window.localStorage.setItem('elite-fulfilment', fulfilment)
@@ -105,6 +99,42 @@ export default function ProductPurchaseOptions({ product, attributes, variations
       })
     )
   }, [selections, variationAttributes, variations])
+
+  const previewVariation = useMemo(() => {
+    const selectedEntries = Object.entries(selections).filter(([, value]) => Boolean(value))
+    if (selectedEntries.length === 0) return undefined
+    return selectedVariation || variations.find((variation) =>
+      variation.attributes.every((attribute) => {
+        const selected = selections[attributeKey(attribute)]
+        return !selected || !attribute.option || selected.toLowerCase() === attribute.option.toLowerCase()
+      })
+    )
+  }, [selectedVariation, selections, variations])
+
+  const previewImages = useMemo(() => {
+    const primary = previewVariation?.image?.src
+    if (!previewVariation || !primary) return []
+    const colour = previewVariation.attributes.find((attribute) => /colou?r/i.test(attribute.name))?.option
+    if (!colour) return [primary]
+
+    const selectedWords = searchableWords(colour)
+    const otherOnlyWords = variationAttributes
+      .find(isColourAttribute)?.options
+      .filter((option) => option !== colour)
+      .flatMap(searchableWords)
+      .filter((word) => !selectedWords.includes(word)) || []
+    const matchingGallery = galleryImages.filter((src) => {
+      const file = decodeURIComponent(src.split('/').pop() || '').toLowerCase()
+      return selectedWords.some((word) => file.includes(word)) && !otherOnlyWords.some((word) => file.includes(word))
+    })
+    return Array.from(new Set([primary, ...matchingGallery]))
+  }, [galleryImages, previewVariation, variationAttributes])
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('elite:variation-images', {
+      detail: previewImages,
+    }))
+  }, [previewImages])
 
   const price = selectedVariation ? Number(selectedVariation.price) : product.price
   const regularPrice = selectedVariation ? Number(selectedVariation.regular_price) || price : product.regularPrice
@@ -172,25 +202,20 @@ export default function ProductPurchaseOptions({ product, attributes, variations
 
       {colourOptions && colourOptions.length > 0 && (
         <div className="mb-5">
-          <p className="text-sm font-semibold text-gray-900 mb-2">Colour</p>
-          <div className="flex flex-wrap gap-2">
-            {colourOptions.map((option) => (
-              <span
-                key={option}
-                title={option}
-                aria-label={option}
-                className="h-7 w-7 rounded-full border border-gray-300 shadow-sm ring-1 ring-black/5"
-                style={{ backgroundColor: colourValue(option) }}
-              />
-            ))}
-          </div>
+          <p className="text-sm font-semibold text-gray-900">
+            Colour: <span className="font-normal">{colourOptions.join(', ')}</span>
+          </p>
         </div>
       )}
 
       {variationAttributes.map((attribute) => (
         <fieldset key={attributeKey(attribute)} className="mb-5">
           <legend className="w-full flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900">Select {attribute.name}</span>
+            <span className="text-sm font-semibold text-gray-900">
+              {isColourAttribute(attribute)
+                ? `Colour: ${selections[attributeKey(attribute)] || 'Select colour'}`
+                : `Select ${attribute.name}`}
+            </span>
             {isSizeAttribute(attribute) && (
               <Link href="/size-guide" className="text-xs font-semibold text-red-600 hover:underline">
                 Size guide
@@ -202,6 +227,13 @@ export default function ProductPurchaseOptions({ product, attributes, variations
               const selected = selections[attributeKey(attribute)] === option
               const available = optionAvailable(attribute, option)
               const colour = isColourAttribute(attribute)
+              const optionImage = colour
+                ? variations.find((variation) =>
+                    variation.attributes.some((variationAttribute) =>
+                      /colou?r/i.test(variationAttribute.name) && variationAttribute.option.toLowerCase() === option.toLowerCase()
+                    ) && variation.image?.src
+                  )?.image?.src
+                : undefined
               return (
                 <button
                   key={option}
@@ -212,28 +244,21 @@ export default function ProductPurchaseOptions({ product, attributes, variations
                   title={option}
                   onClick={() => setSelections((current) => ({ ...current, [attributeKey(attribute)]: option }))}
                   className={colour
-                    ? `flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${selected ? 'border-red-600 bg-red-50 text-red-700 ring-2 ring-red-200' : 'border-gray-300 bg-white text-gray-800 hover:border-red-500'} disabled:cursor-not-allowed disabled:opacity-40`
+                    ? `h-16 w-16 overflow-hidden rounded-lg border-2 bg-white p-1 transition ${selected ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 hover:border-red-500'} disabled:cursor-not-allowed disabled:opacity-40`
                     : `rounded-lg border px-4 py-2 text-sm font-medium transition ${selected ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-300 bg-white text-gray-800 hover:border-red-500'} disabled:cursor-not-allowed disabled:opacity-40`}
                 >
-                  {colour && (
-                    <span
-                      aria-hidden="true"
-                      className="h-6 w-6 rounded-full border border-gray-300 shadow-sm"
-                      style={{ backgroundColor: colourValue(option) }}
-                    />
+                  {colour && optionImage ? (
+                    <img src={optionImage} alt="" className="h-full w-full object-contain" />
+                  ) : (
+                    <span className={available ? '' : 'line-through'}>{option}</span>
                   )}
-                  {!colour && <span className={available ? '' : 'line-through'}>{option}</span>}
-                  {!colour && !available && <span className="sr-only">Out of stock</span>}
+                  {!available && <span className="sr-only">Out of stock</span>}
                 </button>
               )
             })}
           </div>
         </fieldset>
       ))}
-
-      {selectedVariation?.image?.src && selectedVariation.image.src !== product.image && (
-        <img src={selectedVariation.image.src} alt={`${product.name} selected variation`} className="mb-4 h-28 w-28 rounded-lg border border-gray-200 object-contain" />
-      )}
 
       <div className="text-sm mb-6">
         {needsSelection ? (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ProductImageGalleryProps {
   images: string[]
@@ -9,10 +9,24 @@ interface ProductImageGalleryProps {
 
 export default function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [variationImages, setVariationImages] = useState<string[]>([])
   const [zoom, setZoom] = useState(1)
   const [origin, setOrigin] = useState('50% 50%')
 
-  const imageList = images.length > 0 ? images : ['https://placehold.co/600x600/f5f5f5/333333.png?text=No+Image']
+  useEffect(() => {
+    function handleVariationImages(event: Event) {
+      const nextImages = (event as CustomEvent<string[]>).detail
+      setVariationImages(Array.isArray(nextImages) ? nextImages.filter(Boolean) : [])
+      setSelectedIndex(0)
+      setZoom(1)
+    }
+    window.addEventListener('elite:variation-images', handleVariationImages)
+    return () => window.removeEventListener('elite:variation-images', handleVariationImages)
+  }, [])
+
+  const imageList = variationImages.length > 0
+    ? variationImages
+    : images.length > 0 ? images : ['https://placehold.co/600x600/f5f5f5/333333.png?text=No+Image']
   const selectedImage = imageList[selectedIndex]
   const hasMultiple = imageList.length > 1
 

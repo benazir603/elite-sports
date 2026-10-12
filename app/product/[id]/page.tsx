@@ -124,6 +124,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 attributes={product.attributes || []}
                 variations={variations}
                 colourOptions={colourAttribute?.options}
+                galleryImages={images}
               />
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
