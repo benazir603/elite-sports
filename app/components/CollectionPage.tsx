@@ -393,12 +393,23 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                               getProductImage(product, category)
                             }
                             alt={product.name}
-                            className="w-full h-full object-contain transition duration-500 group-hover:scale-105"
+                            className="w-full h-full object-contain transition-opacity duration-300 md:group-hover:opacity-0"
                             loading="lazy"
                             onError={(e) => {
                               e.currentTarget.src = `https://placehold.co/600x600/f5f5f5/333333.png?text=${encodeURIComponent(product.name)}`
                             }}
                           />
+                          {product.images.filter(Boolean)[1] && (
+                            <img
+                              src={product.images.filter(Boolean)[1]}
+                              alt={`${product.name} alternate view`}
+                              className="absolute inset-0 hidden w-full h-full object-contain opacity-0 transition-opacity duration-300 md:block md:group-hover:opacity-100"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          )}
                         </Link>
                         {product.images.filter(Boolean).length > 1 && (
                           <>
@@ -410,7 +421,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                                   return { ...current, [product.id]: index === 0 ? total - 1 : index - 1 }
                                 })
                               }
-                              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition opacity-0 group-hover:opacity-100"
+                              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition md:hidden"
                               aria-label="Previous image"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
@@ -423,7 +434,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                                   return { ...current, [product.id]: index === total - 1 ? 0 : index + 1 }
                                 })
                               }
-                              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition opacity-0 group-hover:opacity-100"
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white text-gray-700 rounded-full shadow transition md:hidden"
                               aria-label="Next image"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
