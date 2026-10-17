@@ -117,16 +117,20 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     const colour = previewVariation.attributes.find((attribute) => /colou?r/i.test(attribute.name))?.option
     if (!colour) return [primary]
 
-    const selectedWords = searchableWords(colour)
-    const otherOnlyWords = variationAttributes
-      .find(isColourAttribute)?.options
-      .filter((option) => option !== colour)
-      .flatMap(searchableWords)
-      .filter((word) => !selectedWords.includes(word)) || []
+    const colourOptions = variationAttributes.find(isColourAttribute)?.options || []
+    const optionWords = colourOptions.map((option) => ({ option, words: searchableWords(option) }))
+
     const matchingGallery = galleryImages.filter((src) => {
       const file = decodeURIComponent(src.split('/').pop() || '').toLowerCase()
-      return selectedWords.some((word) => file.includes(word)) && !otherOnlyWords.some((word) => file.includes(word))
+      const scores = optionWords.map(({ option, words }) => ({
+        option,
+        score: words.reduce((count, word) => (file.includes(word) ? count + 1 : count), 0),
+      }))
+      const selectedScore = scores.find(({ option }) => option === colour)?.score ?? 0
+      if (selectedScore === 0) return false
+      return scores.every(({ option, score }) => option === colour || score < selectedScore)
     })
+
     return Array.from(new Set([primary, ...matchingGallery]))
   }, [galleryImages, previewVariation, variationAttributes])
 

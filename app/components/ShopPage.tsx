@@ -260,10 +260,10 @@ export default function ShopPage() {
       </section>
 
       {/* Sale banner */}
-      <section className="py-20 bg-red-600 text-white">
+      <section className="py-20 bg-gradient-to-r from-red-700 to-red-500 text-white">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <p className="uppercase tracking-widest text-sm font-bold text-red-200 mb-2">Elite Sports</p>
+            <p className="uppercase tracking-widest text-sm font-bold text-red-100 mb-2">Elite Sports</p>
             <h2 className="text-3xl md:text-5xl font-black leading-tight">Gear Up for Your Game</h2>
             <p className="text-red-100 mt-3 max-w-lg">Explore equipment, footwear and accessories for every level of athlete.</p>
           </div>
