@@ -27,80 +27,6 @@ interface CollectionPageProps {
 
 const EMPTY_WOO_PRODUCTS: WooCommerceProduct[] = []
 
-const localProducts: Product[] = [
-  { id: 1, name: 'Nike Air Zoom Pegasus 40', brand: 'Nike', category: 'Running', price: 140, originalPrice: 190, image: '', images: [] },
-  { id: 2, name: 'Adidas Ultraboost Light', brand: 'Adidas', category: 'Running', price: 190, originalPrice: 240, image: '', images: [] },
-  { id: 3, name: 'Jordan 1 Retro High OG', brand: 'Jordan', category: 'Lifestyle', price: 180, originalPrice: 230, image: '', images: [] },
-  { id: 4, name: 'Under Armour Curry 10', brand: 'Under Armour', category: 'Basketball', price: 160, originalPrice: 210, image: '', images: [] },
-  { id: 5, name: 'Puma RS-X Bold', brand: 'Puma', category: 'Lifestyle', price: 120, originalPrice: 160, image: '', images: [] },
-  { id: 6, name: 'New Balance 990v6', brand: 'New Balance', category: 'Running', price: 200, originalPrice: 250, image: '', images: [] },
-  { id: 7, name: 'Nike LeBron 20', brand: 'Nike', category: 'Basketball', price: 200, originalPrice: 260, image: '', images: [] },
-  { id: 23, name: 'Basketball', brand: 'Spalding', category: 'Basketball', price: 120, originalPrice: 170, image: '', images: [] },
-  { id: 24, name: 'Basketball Accessories', brand: 'Elite', category: 'Basketball', price: 80, originalPrice: 120, image: '', images: [] },
-  { id: 10, name: 'Football', brand: 'Nike', category: 'Football', price: 150, originalPrice: 190, image: '', images: [] },
-  { id: 19, name: 'Studs', brand: 'Adidas', category: 'Football', price: 120, originalPrice: 160, image: '', images: [] },
-  { id: 20, name: 'Shin Guards', brand: 'Puma', category: 'Football', price: 80, originalPrice: 120, image: '', images: [] },
-  { id: 21, name: 'Goalkeeper Gloves', brand: 'Reusch', category: 'Football', price: 250, originalPrice: 350, image: '', images: [] },
-  { id: 22, name: 'Football Accessories', brand: 'Elite', category: 'Football', price: 50, originalPrice: 80, image: '', images: [] },
-  { id: 25, name: 'Carrom Board', brand: 'Elite', category: 'Carrom & Chess', price: 2500, originalPrice: 3200, image: '', images: [] },
-  { id: 26, name: 'Chess Board', brand: 'Elite', category: 'Carrom & Chess', price: 1200, originalPrice: 1600, image: '', images: [] },
-  { id: 27, name: 'Coins & Strikers', brand: 'Elite', category: 'Carrom & Chess', price: 350, originalPrice: 500, image: '', images: [] },
-  { id: 28, name: 'Table Tennis Bat', brand: 'Elite', category: 'Table Tennis', price: 1200, originalPrice: 1600, image: '', images: [] },
-  { id: 29, name: 'Table Tennis Ball', brand: 'Elite', category: 'Table Tennis', price: 200, originalPrice: 300, image: '', images: [] },
-  { id: 30, name: 'Table Tennis Rubbers', brand: 'Elite', category: 'Table Tennis', price: 800, originalPrice: 1100, image: '', images: [] },
-  { id: 31, name: 'Table Tennis Accessories', brand: 'Elite', category: 'Table Tennis', price: 400, originalPrice: 600, image: '', images: [] },
-  { id: 32, name: 'Dumbbells', brand: 'Elite', category: 'Fitness', price: 800, originalPrice: 1100, image: '', images: [] },
-  { id: 33, name: 'Kettlebells', brand: 'Elite', category: 'Fitness', price: 1200, originalPrice: 1600, image: '', images: [] },
-  { id: 34, name: 'Resistance Bands', brand: 'Elite', category: 'Fitness', price: 300, originalPrice: 450, image: '', images: [] },
-  { id: 35, name: 'Yoga Mat', brand: 'Elite', category: 'Fitness', price: 600, originalPrice: 900, image: '', images: [] },
-  { id: 36, name: 'Skipping Rope', brand: 'Elite', category: 'Fitness', price: 200, originalPrice: 300, image: '', images: [] },
-  { id: 37, name: 'Fitness Accessories', brand: 'Elite', category: 'Fitness', price: 400, originalPrice: 600, image: '', images: [] },
-  { id: 38, name: 'Volleyball', brand: 'Elite', category: 'Volleyball', price: 700, originalPrice: 950, image: '', images: [] },
-  { id: 39, name: 'Volleyball Net', brand: 'Elite', category: 'Volleyball', price: 1500, originalPrice: 2000, image: '', images: [] },
-  { id: 40, name: 'Volleyball Accessories', brand: 'Elite', category: 'Volleyball', price: 350, originalPrice: 500, image: '', images: [] },
-  { id: 41, name: 'Non-Marking Shoes', brand: 'Elite', category: 'Sports Footwear & Apparel', price: 1200, originalPrice: 1700, image: '', images: [] },
-  { id: 42, name: 'Running Shoes', brand: 'Nike', category: 'Sports Footwear & Apparel', price: 2500, originalPrice: 3200, image: '', images: [] },
-  { id: 43, name: 'Sportswear', brand: 'Puma', category: 'Sports Footwear & Apparel', price: 1500, originalPrice: 2200, image: '', images: [] },
-  { id: 44, name: 'Gym Wear', brand: 'Elite', category: 'Sports Footwear & Apparel', price: 1000, originalPrice: 1400, image: '', images: [] },
-  { id: 45, name: 'Swimming Costume', brand: 'Elite', category: 'Swimming', price: 600, originalPrice: 900, image: '', images: [] },
-  { id: 46, name: 'Swimming Cap', brand: 'Elite', category: 'Swimming', price: 150, originalPrice: 250, image: '', images: [] },
-  { id: 47, name: 'Swimming Goggles', brand: 'Elite', category: 'Swimming', price: 350, originalPrice: 500, image: '', images: [] },
-  { id: 48, name: 'Swimming Accessories', brand: 'Elite', category: 'Swimming', price: 250, originalPrice: 400, image: '', images: [] },
-  { id: 55, name: 'AXFORCE TIGER - 5U', brand: 'Elite', category: 'Badminton', price: 0, originalPrice: 0, image: '', images: [] },
-  { id: 13, name: 'Cricket Bat', brand: 'Elite', category: 'Cricket', price: 2500, originalPrice: 3200, image: '', images: [] },
-  { id: 14, name: 'Cricket Ball', brand: 'Elite', category: 'Cricket', price: 400, originalPrice: 600, image: '', images: [] },
-  { id: 15, name: 'Cricket Pads', brand: 'Elite', category: 'Cricket', price: 1800, originalPrice: 2400, image: '', images: [] },
-  { id: 16, name: 'Cricket Helmet', brand: 'Elite', category: 'Cricket', price: 2200, originalPrice: 2800, image: '', images: [] },
-  { id: 17, name: 'Cricket Guard', brand: 'Elite', category: 'Cricket', price: 350, originalPrice: 500, image: '', images: [] },
-  { id: 18, name: 'Cricket Accessories', brand: 'Elite', category: 'Cricket', price: 650, originalPrice: 900, image: '', images: [] },
-].map((product) => ({
-  ...product,
-  image: `https://placehold.co/600x600/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}`,
-  images: [
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+1`,
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+2`,
-    `https://placehold.co/400x400/f5f5f5/111827.png?text=${encodeURIComponent(product.name)}+3`,
-  ],
-}))
-
-function getLocalProducts(category: string, subcategoryName?: string): Product[] {
-  const categoryProducts = localProducts.filter(
-    (product) => product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === category
-  )
-  if (!subcategoryName) return categoryProducts
-
-  const keywords = subcategoryName
-    .toLowerCase()
-    .split(/[^a-z]+/)
-    .filter((word) => word.length > 2 && word !== 'and')
-    .map((word) => word.replace(/s$/, ''))
-  const matching = categoryProducts.filter((product) => {
-    const name = product.name.toLowerCase()
-    return keywords.some((keyword) => name.includes(keyword))
-  })
-  return matching.length > 0 ? matching : categoryProducts
-}
-
 const priceRanges = [
   { label: 'Under ₹5,000', min: 0, max: 5000 },
   { label: '₹5,000 - ₹10,000', min: 5000, max: 10000 },
@@ -206,11 +132,10 @@ export default function CollectionPage({ category, subcategory, initialProducts 
         if (!response.ok) throw new Error('Product request failed')
         const data: unknown = await response.json()
         const safeProducts = Array.isArray(data) ? data as WooCommerceProduct[] : []
-        const mappedProducts = mapWooProducts(safeProducts, category)
-        setProducts(mappedProducts.length > 0 ? mappedProducts : getLocalProducts(category, activeSub?.name))
+        setProducts(mapWooProducts(safeProducts, category))
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
-          setProducts(getLocalProducts(category, activeSub?.name))
+          setProducts([])
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false)
@@ -219,7 +144,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
 
     loadProducts()
     return () => controller.abort()
-  }, [activeSub?.name, apiCategory, category, initialProducts.length])
+  }, [apiCategory, category, initialProducts.length])
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
