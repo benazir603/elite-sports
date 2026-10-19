@@ -463,7 +463,9 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                         <div className="mt-auto">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-red-600">{formatMoney(product.price)}</span>
-                            <span className="text-xs text-gray-400 line-through">{formatMoney(product.originalPrice)}</span>
+                            {product.originalPrice > product.price && (
+                              <span className="text-xs text-gray-400 line-through">{formatMoney(product.originalPrice)}</span>
+                            )}
                           </div>
                           <button
                             onClick={() => addToCart(product)}
