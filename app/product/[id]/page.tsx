@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Header from '@/app/components/Header'
-import PincodeCheck from '@/app/components/PincodeCheck'
 import ProductImageGallery from '@/app/components/ProductImageGallery'
 import ProductInfoSections from '@/app/components/ProductInfoSections'
 import ProductPurchaseOptions from '@/app/components/ProductPurchaseOptions'
@@ -129,10 +128,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                 <p className="font-bold text-gray-900 mb-1">Delivery</p>
-                <p className="text-sm text-gray-600 mb-2">Check availability for your delivery PIN code. <Link href="/shipping" className="text-red-600 font-semibold hover:underline">Shipping info</Link></p>
+                <p className="text-sm text-gray-600 mb-2">We deliver across India. <Link href="/shipping" className="text-red-600 font-semibold hover:underline">Shipping info</Link></p>
                 <p className="text-sm text-gray-600">Sold by <span className="font-medium text-gray-900">Elite Sports</span></p>
                 <p className="text-sm text-gray-500 mt-2">Secure transaction.</p>
-                <PincodeCheck weight={Number(product.weight)} />
               </div>
 
 

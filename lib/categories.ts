@@ -103,4 +103,4 @@ export function findSubCategory(parentSlug: string, subSlug: string): SubCategor
 
 // Categories that are live with real products. All others render a
 // "Coming Soon" page. Add a slug here once that category is stocked.
-export const LIVE_CATEGORIES = new Set<string>(['badminton'])
+export const LIVE_CATEGORIES = new Set<string>(['badminton', 'volleyball', 'football'])

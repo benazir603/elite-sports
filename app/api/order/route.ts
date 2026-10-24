@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createOrder, createCustomer, findCustomerByEmail, getProductById, getProductVariation, updateOrder, sanitizeWooUsername } from '@/lib/woocommerce'
 import { createRazorpayOrder } from '@/lib/razorpay'
+import { calculateShipping, getShippingZone, itemWeightKg, ZONE_LABELS } from '@/lib/shipping'
 
 const MAX_CART_ITEMS = 50
 const MAX_QUANTITY = 20
@@ -155,6 +156,14 @@ export async function POST(request: NextRequest) {
       postcode: customer.postcode,
       country: customer.country,
     }
+
+    const totalWeightKg = purchasableItems.reduce(
+      (sum, { item, product }) => sum + itemWeightKg(product.weight) * item.quantity,
+      0
+    )
+    const shippingZone = getShippingZone(customer.state, customer.postcode)
+    const shippingCharge = isPickup ? 0 : calculateShipping(totalWeightKg, shippingZone)
+
     const order = await createOrder({
       payment_method: 'razorpay',
       payment_method_title: 'Razorpay (Cards / UPI / NetBanking)',
@@ -163,11 +172,22 @@ export async function POST(request: NextRequest) {
       billing: { ...address, email: sessionEmail, phone: customer.phone },
       ...(isPickup
         ? { shipping_lines: [{ method_id: 'local_pickup', method_title: 'Customer Pickup — Chennai Store', total: '0.00' }] }
-        : { shipping: address }),
+        : {
+            shipping: address,
+            shipping_lines: [{
+              method_id: 'flat_rate',
+              method_title: `Courier — ${ZONE_LABELS[shippingZone]}`,
+              total: shippingCharge.toFixed(2),
+            }],
+          }),
       line_items: lineItems,
       meta_data: [
         { key: '_elite_payment_owner', value: sessionEmail },
         { key: '_elite_fulfilment', value: isPickup ? 'pickup' : 'delivery' },
+        ...(isPickup ? [] : [
+          { key: '_elite_shipping_zone', value: shippingZone },
+          { key: '_elite_shipping_weight_kg', value: totalWeightKg.toFixed(3) },
+        ]),
       ],
     })
     wooOrderId = order.id
@@ -194,6 +214,8 @@ export async function POST(request: NextRequest) {
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
+      shippingCharge,
+      shippingZone: isPickup ? undefined : shippingZone,
       key: process.env.RAZORPAY_KEY_ID,
     })
   } catch (error: unknown) {

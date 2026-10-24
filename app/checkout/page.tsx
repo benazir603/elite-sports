@@ -23,6 +23,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState('')
   const [savedCustomer, setSavedCustomer] = useState<any>(null)
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery')
+  const [shippingQuote, setShippingQuote] = useState<{ charge: number; zoneLabel: string } | null>(null)
   const { data: session, status } = useSession()
   const checkoutTracked = useRef(false)
 
@@ -31,6 +32,35 @@ export default function CheckoutPage() {
       setFulfilment('pickup')
     }
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      if (fulfilment !== 'delivery' || cart.length === 0 || !form.state.trim() || !/^\d{6}$/.test(form.postcode.trim())) {
+        setShippingQuote(null)
+        return
+      }
+      fetch('/api/shipping-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart, state: form.state, postcode: form.postcode }),
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (typeof data?.charge === 'number') {
+            setShippingQuote({ charge: data.charge, zoneLabel: data.zoneLabel })
+          } else {
+            setShippingQuote(null)
+          }
+        })
+        .catch(() => {})
+    }, 400)
+    return () => {
+      controller.abort()
+      clearTimeout(timer)
+    }
+  }, [fulfilment, cart, form.state, form.postcode])
 
   function changeFulfilment(method: 'delivery' | 'pickup') {
     setFulfilment(method)
@@ -434,12 +464,28 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 ))}
-                <div className="border-t pt-4 flex justify-between text-lg font-black">
-                  <span>Total</span>
-                  <span>{formatMoney(cartTotal)}</span>
+                <div className="border-t pt-4 space-y-1">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatMoney(cartTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Shipping{shippingQuote ? ` (${shippingQuote.zoneLabel})` : ''}</span>
+                    <span>
+                      {fulfilment === 'pickup'
+                        ? 'Free'
+                        : shippingQuote
+                          ? formatMoney(shippingQuote.charge)
+                          : 'Enter PIN code & state'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-lg font-black pt-1">
+                    <span>Total</span>
+                    <span>{formatMoney(cartTotal + (fulfilment === 'delivery' ? shippingQuote?.charge || 0 : 0))}</span>
+                  </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  {fulfilment === 'pickup' ? 'Fulfilment: Customer pickup — Chennai store' : 'Fulfilment: Home delivery'}
+                  {fulfilment === 'pickup' ? 'Fulfilment: Customer pickup — Chennai store' : 'Fulfilment: Home delivery — final shipping is confirmed at payment'}
                 </p>
               </>
             )}

@@ -96,7 +96,9 @@ function ProductGridSkeleton() {
 export default function CollectionPage({ category, subcategory, initialProducts = EMPTY_WOO_PRODUCTS }: CollectionPageProps) {
   const activeSub = subcategory ? findSubCategory(category, subcategory) : undefined
   const subLinks = SUBCATEGORIES[category] || []
-  const apiCategory = activeSub ? activeSub.wooSlugs.join(',') : category
+  const apiCategory = activeSub
+    ? activeSub.wooSlugs.join(',')
+    : [category, ...(SUBCATEGORIES[category] || []).flatMap((sub) => sub.wooSlugs)].join(',')
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
   const [products, setProducts] = useState<Product[]>(() => mapWooProducts(initialProducts, category))

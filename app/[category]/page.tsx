@@ -55,7 +55,8 @@ export default async function CategoryPage({ params }: PageProps) {
   let products: WooCommerceProduct[] = []
 
   try {
-    const response = await getProductsByCategorySlug(category)
+    const slugs = [category, ...(SUBCATEGORIES[category] || []).flatMap((sub) => sub.wooSlugs)]
+    const response = await getProductsByCategorySlug(slugs)
     products = Array.isArray(response) ? response : []
   } catch {
     products = []
