@@ -82,9 +82,11 @@ function buildUrl(endpoint: string, params?: Record<string, string | number | un
   return url.toString()
 }
 
+const LIST_FIELDS = 'id,name,slug,permalink,sku,type,price,regular_price,sale_price,status,stock_status,stock_quantity,short_description,weight,dimensions,images,categories,attributes,variations,brands'
+
 export async function getProducts(params?: Record<string, string | number | undefined>): Promise<WooCommerceProduct[]> {
-  const url = buildUrl('products', { per_page: 100, ...params })
-  const res = await fetch(url, { next: { revalidate: 60 } })
+  const url = buildUrl('products', { per_page: 100, _fields: LIST_FIELDS, ...params })
+  const res = await fetch(url, { next: { revalidate: 300 } })
   if (!res.ok) {
     throw new Error(`WooCommerce products fetch failed: ${res.status}`)
   }
@@ -103,7 +105,7 @@ export async function getAllProducts(): Promise<WooCommerceProduct[]> {
 
 export async function getProductById(id: number, fresh = false): Promise<WooCommerceProduct> {
   const url = buildUrl(`products/${id}`)
-  const res = await fetch(url, fresh ? { cache: 'no-store' } : { next: { revalidate: 60 } })
+  const res = await fetch(url, fresh ? { cache: 'no-store' } : { next: { revalidate: 300 } })
   if (!res.ok) {
     throw new Error(`WooCommerce product fetch failed: ${res.status}`)
   }
@@ -112,7 +114,7 @@ export async function getProductById(id: number, fresh = false): Promise<WooComm
 
 export async function getProductVariations(productId: number): Promise<WooCommerceVariation[]> {
   const url = buildUrl(`products/${productId}/variations`, { per_page: 100 })
-  const res = await fetch(url, { next: { revalidate: 60 } })
+  const res = await fetch(url, { next: { revalidate: 300 } })
   if (!res.ok) {
     throw new Error(`WooCommerce variations fetch failed: ${res.status}`)
   }
