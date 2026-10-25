@@ -46,7 +46,7 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
   football: [
     sub('football', 'shoes', 'Shoes', ['football-shoe', 'football-shoes', 'football-studs', 'studs', 'stud']),
     sub('football', 'footballs', 'Footballs', ['football', 'foodball', 'footballs', 'f-ball']),
-    sub('football', 'shin-guards', 'Shin Guards', ['football-shin-guards', 'shin-guard', 'shin-guards']),    sub('football', 'shin-guards', 'Shin Guards', ['football-shin-guards', 'shin-guard', 'shin-guards']),
+    sub('football', 'shin-guards', 'Shin Guards', ['football-shin-guards', 'shin-guard', 'shin-guards']),
     sub('football', 'goalkeeper-gloves', 'Goalkeeper Gloves', ['football-goalkeeper-gloves', 'goalkeeper-gloves']),
     sub('football', 'accessories', 'Accessories', ['f-ball-accessories', 'football-accessories']),
   ],
