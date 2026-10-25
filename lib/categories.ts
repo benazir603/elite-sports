@@ -36,7 +36,7 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
   ],
   cricket: [
     sub('cricket', 'bats', 'Bats', ['cricket-bat', 'cricket-bats', 'bat', 'bats', 'tennis-cricket']),
-    sub('cricket', 'balls', 'Balls', ['cricket-ball', 'cr-ball', 'ball', 'balls', 'wind-ball']),
+    sub('cricket', 'balls', 'Balls', ['cricket-ball', 'cr-ball', 'wind-ball']),
     sub('cricket', 'batting-gloves', 'Batting Gloves', ['cricket-batting-gloves', 'batting-gloves', 'gloves']),
     sub('cricket', 'pads', 'Pads', ['cricket-pads', 'pad', 'pads']),
     sub('cricket', 'helmets', 'Helmets', ['cricket-helmet', 'helmet', 'helmets']),
@@ -104,4 +104,4 @@ export function findSubCategory(parentSlug: string, subSlug: string): SubCategor
 
 // Categories that are live with real products. All others render a
 // "Coming Soon" page. Add a slug here once that category is stocked.
-export const LIVE_CATEGORIES = new Set<string>(['badminton', 'volleyball', 'football'])
+export const LIVE_CATEGORIES = new Set<string>(['badminton', 'volleyball', 'football', 'cricket'])
