@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Header from './Header'
 import { useCart } from './CartProvider'
@@ -26,6 +26,7 @@ interface CollectionPageProps {
 }
 
 const EMPTY_WOO_PRODUCTS: WooCommerceProduct[] = []
+const PAGE_SIZE = 24
 
 const priceRanges = [
   { label: 'Under ₹5,000', min: 0, max: 5000 },
@@ -101,6 +102,8 @@ export default function CollectionPage({ category, subcategory, initialProducts 
     : [category, ...(SUBCATEGORIES[category] || []).flatMap((sub) => sub.wooSlugs)].join(',')
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
+  const [page, setPage] = useState(1)
+  const gridTopRef = useRef<HTMLDivElement>(null)
   const [products, setProducts] = useState<Product[]>(() => mapWooProducts(initialProducts, category))
   const [loading, setLoading] = useState(initialProducts.length === 0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -167,6 +170,31 @@ export default function CollectionPage({ category, subcategory, initialProducts 
 
     return result
   }, [selectedPrice, sortBy, products])
+
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const visibleProducts = filteredProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  function goToPage(next: number) {
+    setPage(Math.min(Math.max(1, next), pageCount))
+    gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function getPageNumbers() {
+    const pages: (number | 'ellipsis')[] = []
+    if (pageCount <= 7) {
+      for (let i = 1; i <= pageCount; i += 1) pages.push(i)
+      return pages
+    }
+    pages.push(1)
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(pageCount - 1, currentPage + 1)
+    if (start > 2) pages.push('ellipsis')
+    for (let i = start; i <= end; i += 1) pages.push(i)
+    if (end < pageCount - 1) pages.push('ellipsis')
+    pages.push(pageCount)
+    return pages
+  }
 
   const title = (activeSub ? activeSub.name : category.replace(/-/g, ' ')).replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -269,7 +297,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                           type="radio"
                           name="price"
                           checked={selectedPrice === range.label}
-                          onChange={() => setSelectedPrice(range.label)}
+                          onChange={() => { setSelectedPrice(range.label); setPage(1) }}
                           className="w-4 h-4 accent-red-600"
                         />
                         <span className="text-sm text-gray-600 group-hover:text-red-600 transition">{range.label}</span>
@@ -281,12 +309,16 @@ export default function CollectionPage({ category, subcategory, initialProducts 
             </aside>
 
             {/* Product grid */}
-            <div className="flex-1">
+            <div className="flex-1" ref={gridTopRef}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <p className="text-gray-500 text-sm">{filteredProducts.length} results</p>
+                <p className="text-gray-500 text-sm">
+                  {filteredProducts.length === 0
+                    ? '0 results'
+                    : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filteredProducts.length)} of ${filteredProducts.length} products`}
+                </p>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'price-asc' | 'price-desc' | 'name')}
+                  onChange={(e) => { setSortBy(e.target.value as 'price-asc' | 'price-desc' | 'name'); setPage(1) }}
                   className="px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-red-600"
                 >
                   <option value="price-asc">Price: Low to High</option>
@@ -306,8 +338,9 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                 </div>
               ) : (
                 <Suspense fallback={<ProductGridSkeleton />}>
+                  <>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredProducts.map((product) => (
+                    {visibleProducts.map((product) => (
                     <div
                       key={product.id}
                       className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition duration-300 flex flex-col h-full"
@@ -405,6 +438,51 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                     </div>
                     ))}
                   </div>
+                  {pageCount > 1 && (
+                    <nav className="mt-8 flex flex-col items-center gap-3" aria-label="Product pages">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => goToPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 text-sm font-semibold border border-gray-300 rounded-lg hover:border-red-600 hover:text-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label="Previous page"
+                        >
+                          ← Prev
+                        </button>
+                        {getPageNumbers().map((item, index) =>
+                          item === 'ellipsis' ? (
+                            <span key={`ellipsis-${index}`} className="px-2 text-gray-400">…</span>
+                          ) : (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => goToPage(item)}
+                              aria-current={item === currentPage ? 'page' : undefined}
+                              className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
+                                item === currentPage
+                                  ? 'bg-red-600 text-white border-red-600'
+                                  : 'border-gray-300 hover:border-red-600 hover:text-red-600'
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          )
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => goToPage(currentPage + 1)}
+                          disabled={currentPage === pageCount}
+                          className="px-3 py-2 text-sm font-semibold border border-gray-300 rounded-lg hover:border-red-600 hover:text-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label="Next page"
+                        >
+                          Next →
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400">Page {currentPage} of {pageCount}</p>
+                    </nav>
+                  )}
+                  </>
                 </Suspense>
               )}
             </div>
