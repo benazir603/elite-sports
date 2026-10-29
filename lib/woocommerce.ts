@@ -95,8 +95,8 @@ export async function getProducts(params?: Record<string, string | number | unde
 
 export async function getAllProducts(): Promise<WooCommerceProduct[]> {
   const products: WooCommerceProduct[] = []
-  for (let page = 1; page <= 10; page += 1) {
-    const batch = await getProducts({ per_page: 100, page })
+  for (let page = 1; ; page += 1) {
+    const batch = await getProducts({ per_page: 100, page, status: 'publish' })
     products.push(...batch)
     if (batch.length < 100) break
   }
@@ -136,7 +136,7 @@ export async function getProductsByCategorySlug(slug: string | string[]): Promis
     .filter(Boolean)
   if (slugs.length === 0) return []
 
-  const response = await getProducts({ per_page: 100 })
+  const response = await getAllProducts()
   const products = Array.isArray(response) ? response : []
   return products.filter((product) =>
     Array.isArray(product.categories) && product.categories.some((category) =>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getProductsByCategorySlug, getProducts } from '@/lib/woocommerce'
+import { getProductsByCategorySlug, getAllProducts } from '@/lib/woocommerce'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       const response = await getProductsByCategorySlug(slugs)
       return NextResponse.json(Array.isArray(response) ? response : [])
     }
-    const products = await getProducts({ per_page: 100 })
+    const products = await getAllProducts()
     return NextResponse.json(products)
   } catch (error: unknown) {
     console.error('[API /products] error:', error)
