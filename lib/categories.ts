@@ -30,13 +30,13 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
     sub('badminton', 'shuttlecocks', 'Shuttlecocks', ['badminton-cork', 'badminton-cork-badminton', 'shuttlecock', 'shuttlecocks', 'cork']),
     sub('badminton', 'strings', 'Strings & Gutting', ['badminton-string', 'badminton-string-badminton', 'string', 'strings']),
     sub('badminton', 'grips', 'Grips', ['badminton-grip', 'badminton-grip-badminton', 'grip', 'grips']),
-    sub('badminton', 'shoes', 'Shoes', ['badminton-shoe', 'badminton-shoe-badminton', 'shoe', 'shoes']),
+    sub('badminton', 'shoes', 'Shoes', ['badminton-shoe', 'badminton-shoe-badminton']),
     sub('badminton', 'kit-bags', 'Kit Bags', ['badminton-kit-bag', 'badminton-kit-bag-badminton', 'kit-bag']),
     sub('badminton', 'sweat-bands', 'Sweat Bands', ['badminton-sweat-band', 'badminton-sweat-band-badminton', 'sweat-band']),
   ],
   cricket: [
     sub('cricket', 'bats', 'Bats', ['cricket-bat', 'cricket-bats', 'bat', 'bats', 'tennis-cricket']),
-    sub('cricket', 'balls', 'Balls', ['cricket-ball', 'cr-ball', 'wind-ball']),
+    sub('cricket', 'balls', 'Balls', ['cricket-ball', 'balls-cricket', 'cr-ball', 'wind-ball']),
     sub('cricket', 'batting-gloves', 'Batting Gloves', ['cricket-batting-gloves', 'batting-gloves', 'gloves']),
     sub('cricket', 'pads', 'Pads', ['cricket-pads', 'pad', 'pads']),
     sub('cricket', 'helmets', 'Helmets', ['cricket-helmet', 'helmet', 'helmets']),
@@ -51,7 +51,7 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
     sub('football', 'accessories', 'Accessories', ['f-ball-accessories', 'football-accessories']),
   ],
   basketball: [
-    sub('basketball', 'balls', 'Balls', ['basketball', 'baskatball', 'basketball-balls']),
+    sub('basketball', 'balls', 'Balls', ['basketball-balls']),
     sub('basketball', 'accessories', 'Accessories', ['basketball-accessories']),
   ],
   'carrom-chess': [
@@ -75,18 +75,18 @@ export const SUBCATEGORIES: Record<string, SubCategory[]> = {
   ],
   volleyball: [
     sub('volleyball', 'shoes', 'Shoes', ['volleyball-shoe', 'volleyball-shoes', 'volley-ball-shoe', 'volley-ball-shoes']),
-    sub('volleyball', 'balls', 'Balls', ['volley-ball', 'volleyball', 'volleyball-balls']),
+    sub('volleyball', 'balls', 'Balls', ['volley-ball', 'volleyball-balls']),
     sub('volleyball', 'nets', 'Nets', ['volleyball-net', 'volleyball-nets', 'volley-ball-net']),
     sub('volleyball', 'accessories', 'Accessories', ['volleyball-accessories', 'volley-ball-accessories']),
   ],
   'sports-footwear-apparel': [
     sub('sports-footwear-apparel', 'non-marking-shoes', 'Non-Marking Shoes', ['non-marking-shoes', 'sports-footwear-apparel-non-marking-shoes']),
-    sub('sports-footwear-apparel', 'running-shoes', 'Running Shoes', ['running-shoes', 'running', 'shoe', 'sports-footwear-apparel-running-shoes']),
+    sub('sports-footwear-apparel', 'running-shoes', 'Running Shoes', ['running-shoes', 'running', 'sports-footwear-apparel-running-shoes']),
     sub('sports-footwear-apparel', 'sportswear', 'Sportswear', ['sportswear', 'clothing', 'sports-footwear-apparel-sportswear']),
     sub('sports-footwear-apparel', 'gym-wear', 'Gym Wear', ['gym-wear', 'sports-footwear-apparel-gym-wear']),
   ],
   swimming: [
-    sub('swimming', 'costumes', 'Costumes', ['swimming-costume', 'swimming-costumes', 'swimming']),
+    sub('swimming', 'costumes', 'Costumes', ['swimming-costume', 'swimming-costumes']),
     sub('swimming', 'caps', 'Caps', ['swimming-cap', 'swimming-caps', 'cap']),
     sub('swimming', 'goggles', 'Goggles', ['swimming-goggle', 'swimming-goggles', 'goggles']),
     sub('swimming', 'accessories', 'Accessories', ['swimming-accessories']),
