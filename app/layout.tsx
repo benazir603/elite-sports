@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { getMenu } from "@/lib/catalog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,14 +52,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const menu = await getMenu().catch(() => [])
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers menu={menu}>{children}</Providers>
       </body>
     </html>
   );

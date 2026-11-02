@@ -1,29 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 import { getAllProducts } from '@/lib/woocommerce'
-import { SUBCATEGORIES } from '@/lib/categories'
-
-const CATEGORY_SLUGS = [
-  'badminton',
-  'cricket',
-  'football',
-  'basketball',
-  'carrom-chess',
-  'table-tennis',
-  'fitness',
-  'volleyball',
-  'sports-footwear-apparel',
-  'swimming',
-  'other-items',
-  'tennis',
-  'pickleball',
-  'shoes',
-  'squash',
-  'other-sports',
-  'apparels',
-  'accessories',
-  'sports-equipments',
-]
+import { getMenu } from '@/lib/catalog'
 
 const STATIC_ROUTES = [
   '',
@@ -43,20 +21,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly',
     priority: route === '' ? 1 : 0.7,
   }))
-  const categoryEntries: MetadataRoute.Sitemap = CATEGORY_SLUGS.map((slug) => ({
-    url: `${SITE_URL}/${slug}`,
+  const menu = await getMenu().catch(() => [])
+  const categoryEntries: MetadataRoute.Sitemap = menu.map((category) => ({
+    url: `${SITE_URL}/${category.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
   }))
-  const subCategoryEntries: MetadataRoute.Sitemap = Object.entries(SUBCATEGORIES).flatMap(
-    ([parent, subs]) =>
-      subs.map((sub) => ({
-        url: `${SITE_URL}/${parent}/${sub.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.6,
-      }))
+  const subCategoryEntries: MetadataRoute.Sitemap = menu.flatMap((category) =>
+    category.children.map((sub) => ({
+      url: `${SITE_URL}/${category.slug}/${sub.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }))
   )
 
   try {

@@ -189,6 +189,7 @@ export interface WooCommerceCategory {
   slug: string
   parent: number
   count?: number
+  menu_order?: number
 }
 
 export async function getCategories(

@@ -1,11 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Header from './Header'
 import { useCart } from './CartProvider'
 import { getProductBrand, type WooCommerceProduct } from '@/lib/woocommerce'
-import { SUBCATEGORIES, findSubCategory } from '@/lib/categories'
 
 interface Product {
   id: number
@@ -19,13 +18,19 @@ interface Product {
   shortDescription?: string
 }
 
-interface CollectionPageProps {
-  category: string
-  subcategory?: string
-  initialProducts?: WooCommerceProduct[]
+export interface CategoryLink {
+  name: string
+  slug: string
 }
 
-const EMPTY_WOO_PRODUCTS: WooCommerceProduct[] = []
+interface CollectionPageProps {
+  category: string
+  categoryName: string
+  subcategory?: CategoryLink
+  subLinks: CategoryLink[]
+  initialProducts: WooCommerceProduct[]
+}
+
 const PAGE_SIZE = 24
 
 const priceRanges = [
@@ -94,18 +99,12 @@ function ProductGridSkeleton() {
   )
 }
 
-export default function CollectionPage({ category, subcategory, initialProducts = EMPTY_WOO_PRODUCTS }: CollectionPageProps) {
-  const activeSub = subcategory ? findSubCategory(category, subcategory) : undefined
-  const subLinks = SUBCATEGORIES[category] || []
-  const apiCategory = activeSub
-    ? activeSub.wooSlugs.join(',')
-    : [category, ...(SUBCATEGORIES[category] || []).flatMap((sub) => sub.wooSlugs)].join(',')
+export default function CollectionPage({ category, categoryName, subcategory: activeSub, subLinks, initialProducts }: CollectionPageProps) {
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
   const [page, setPage] = useState(1)
   const gridTopRef = useRef<HTMLDivElement>(null)
-  const [products, setProducts] = useState<Product[]>(() => mapWooProducts(initialProducts, category))
-  const [loading, setLoading] = useState(initialProducts.length === 0)
+  const products = useMemo(() => mapWooProducts(initialProducts, category), [initialProducts, category])
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [cardImageIndex, setCardImageIndex] = useState<Record<number, number>>({})
@@ -123,33 +122,6 @@ export default function CollectionPage({ category, subcategory, initialProducts 
     return selectedProduct.image ? [selectedProduct.image] : []
   }, [selectedProduct])
   const currentImage = currentProductImages[selectedImageIndex] || 'https://placehold.co/400x400/f5f5f5/333333.png?text=No+Image'
-
-  useEffect(() => {
-    if (initialProducts.length > 0) return
-
-    const controller = new AbortController()
-
-    async function loadProducts() {
-      try {
-        const response = await fetch(`/api/products?category=${encodeURIComponent(apiCategory)}`, {
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error('Product request failed')
-        const data: unknown = await response.json()
-        const safeProducts = Array.isArray(data) ? data as WooCommerceProduct[] : []
-        setProducts(mapWooProducts(safeProducts, category))
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          setProducts([])
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-
-    loadProducts()
-    return () => controller.abort()
-  }, [apiCategory, category, initialProducts.length])
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
@@ -196,7 +168,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
     return pages
   }
 
-  const title = (activeSub ? activeSub.name : category.replace(/-/g, ' ')).replace(/\b\w/g, (c) => c.toUpperCase())
+  const title = activeSub ? activeSub.name : categoryName
 
   function addToCart(product: Product) {
     addToCartContext({
@@ -250,7 +222,7 @@ export default function CollectionPage({ category, subcategory, initialProducts 
             <span className="mx-1.5">/</span>
             {activeSub ? (
               <>
-                <Link href={`/${category}`} className="hover:text-red-600">{category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</Link>
+                <Link href={`/${category}`} className="hover:text-red-600">{categoryName}</Link>
                 <span className="mx-1.5">/</span>
                 <span className="text-gray-900 font-semibold">{activeSub.name}</span>
               </>
@@ -327,11 +299,9 @@ export default function CollectionPage({ category, subcategory, initialProducts 
                 </select>
               </div>
 
-              {loading ? (
-                <ProductGridSkeleton />
-              ) : filteredProducts.length === 0 ? (
+              {filteredProducts.length === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">No products match your filters.</p>
+                  <p className="text-gray-500">{products.length === 0 ? 'No products in this category yet.' : 'No products match your filters.'}</p>
                   <button onClick={clearFilters} className="mt-4 text-red-600 font-semibold hover:underline">
                     Clear filters
                   </button>

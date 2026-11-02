@@ -1,28 +1,24 @@
 import type { Metadata } from 'next'
+import { notFound, redirect } from 'next/navigation'
 import CollectionPage from '../components/CollectionPage'
-import ComingSoon from '../components/ComingSoon'
-import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES, LIVE_CATEGORIES } from '@/lib/categories'
+import { getCategoryProducts, getMenu, matchCategory } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/site'
-import { getProductsByCategorySlug, type WooCommerceProduct } from '@/lib/woocommerce'
 
 interface PageProps {
   params: Promise<{ category: string }>
 }
 
-function categoryTitle(slug: string) {
-  return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
 export async function generateStaticParams() {
-  return Array.from(
-    new Set([...PARENT_CATEGORY_SLUGS, ...Object.keys(SUBCATEGORIES)])
-  ).map((category) => ({ category }))
+  const menu = await getMenu().catch(() => [])
+  return menu.map((category) => ({ category: category.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category } = await params
-  const title = categoryTitle(category)
-  const subs = (SUBCATEGORIES[category] || []).map((s) => s.name.toLowerCase())
+  const node = matchCategory(await getMenu(), category)
+  if (!node) return {}
+  const title = node.name
+  const subs = node.children.map((s) => s.name.toLowerCase())
   return {
     title: `${title} Equipment & Accessories Online`,
     description: `Shop ${title.toLowerCase()} equipment online at Elite Sports Chennai${
@@ -35,32 +31,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ...subs.map((s) => `${s} online`),
       'Elite Sports',
     ],
-    alternates: { canonical: `${SITE_URL}/${category}` },
+    alternates: { canonical: `${SITE_URL}/${node.slug}` },
     openGraph: {
       title: `${title} Equipment & Accessories Online | Elite Sports`,
       description: `Shop ${title.toLowerCase()} equipment at Elite Sports Chennai. Delivery across India.`,
-      url: `${SITE_URL}/${category}`,
+      url: `${SITE_URL}/${node.slug}`,
     },
   }
 }
 
 export default async function CategoryPage({ params }: PageProps) {
-  const { category: rawCategory } = await params
-  const category = rawCategory.trim().toLowerCase()
+  const { category } = await params
+  const node = matchCategory(await getMenu(), category)
+  if (!node) notFound()
+  if (node.slug !== category) redirect(`/${node.slug}`)
 
-  if (!LIVE_CATEGORIES.has(category)) {
-    return <ComingSoon title={categoryTitle(category)} />
-  }
-
-  let products: WooCommerceProduct[] = []
-
-  try {
-    const slugs = [category, ...(SUBCATEGORIES[category] || []).flatMap((sub) => sub.wooSlugs)]
-    const response = await getProductsByCategorySlug(slugs)
-    products = Array.isArray(response) ? response : []
-  } catch {
-    products = []
-  }
-
-  return <CollectionPage key={category} category={category} initialProducts={products} />
+  const products = await getCategoryProducts(node)
+  return (
+    <CollectionPage
+      key={node.slug}
+      category={node.slug}
+      categoryName={node.name}
+      subLinks={node.children.map(({ name, slug }) => ({ name, slug }))}
+      initialProducts={products}
+    />
+  )
 }

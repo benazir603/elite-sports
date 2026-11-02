@@ -6,42 +6,24 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useCart } from './CartProvider'
 import SearchBar from './SearchBar'
-import { SUBCATEGORIES } from '@/lib/categories'
+import { useMenu } from './MenuProvider'
 
 interface HeaderProps {
   cartCount?: number
 }
 
-interface Category {
-  name: string
-  slug: string
-}
-
-const categories: Category[] = [
-  { name: 'CRICKET', slug: 'cricket' },
-  { name: 'FOOTBALL', slug: 'football' },
-  { name: 'BASKETBALL', slug: 'basketball' },
-  { name: 'CARROM & CHESS', slug: 'carrom-chess' },
-  { name: 'TABLE TENNIS', slug: 'table-tennis' },
-  { name: 'FITNESS', slug: 'fitness' },
-  { name: 'VOLLEYBALL', slug: 'volleyball' },
-  { name: 'SPORTS FOOTWEAR & APPAREL', slug: 'sports-footwear-apparel' },
-  { name: 'SWIMMING', slug: 'swimming' },
-  { name: 'OTHER ITEMS', slug: 'other-items' },
-  { name: 'BADMINTON', slug: 'badminton' },
-]
-
 export default function Header({ cartCount: _cartCount }: HeaderProps) {
   const { cartCount, openCartDrawer } = useCart()
   const { data: session } = useSession()
+  const categories = useMenu()
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileActive, setMobileActive] = useState<string | null>(null)
   const pathname = usePathname()
   const isProductPage = pathname?.startsWith('/product/')
 
-  const activeCatData = categories.find((category) => category.name === activeCategory)
-  const activeSubLinks = activeCatData ? SUBCATEGORIES[activeCatData.slug] || [] : []
+  const activeCatData = categories.find((category) => category.slug === activeCategory)
+  const activeSubLinks = activeCatData?.children ?? []
 
   return (
     <header className="sticky top-0 z-50">
@@ -144,10 +126,10 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
             </li>
             {categories.map((cat) => (
               <li
-                key={cat.name}
+                key={cat.slug}
                 className="relative"
                 onMouseEnter={() => {
-                  setActiveCategory(cat.name)
+                  setActiveCategory(cat.slug)
                 }}
                 onMouseLeave={() => setActiveCategory(null)}
               >
@@ -157,7 +139,7 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
                 >
                   {cat.name}
                 </a>
-                {activeCategory === cat.name && activeCatData && (
+                {activeCategory === cat.slug && activeSubLinks.length > 0 && (
                   <div className="absolute top-full left-0 w-64 bg-white text-gray-800 shadow-2xl border border-gray-200 z-50">
                     <p className="text-sm font-black uppercase tracking-wide text-gray-900 px-5 py-3 border-b border-gray-100">
                       {cat.name}
@@ -226,16 +208,16 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
                 )}
               </div>
               {categories.map((cat) => (
-                <div key={cat.name} className="border-b border-gray-100 last:border-0">
+                <div key={cat.slug} className="border-b border-gray-100 last:border-0">
                   <button
                     onClick={() => {
-                      setMobileActive(mobileActive === cat.name ? null : cat.name)
+                      setMobileActive(mobileActive === cat.slug ? null : cat.slug)
                     }}
                     className="w-full flex items-center justify-between py-3 px-2 text-sm font-bold uppercase text-gray-800"
                   >
                     {cat.name}
                     <svg
-                      className={`w-4 h-4 transition-transform ${mobileActive === cat.name ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 transition-transform ${mobileActive === cat.slug ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -243,9 +225,16 @@ export default function Header({ cartCount: _cartCount }: HeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {mobileActive === cat.name && (
+                  {mobileActive === cat.slug && (
                     <div className="pb-2 pl-4 space-y-1">
-                      {(SUBCATEGORIES[cat.slug] || []).map((item) => (
+                      <a
+                        href={`/${cat.slug}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block text-sm font-semibold text-gray-700 hover:text-red-600 py-1"
+                      >
+                        All {cat.name}
+                      </a>
+                      {cat.children.map((item) => (
                         <a
                           key={item.slug}
                           href={`/${cat.slug}/${item.slug}`}

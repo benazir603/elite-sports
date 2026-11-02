@@ -1,35 +1,33 @@
 import type { Metadata } from 'next'
+import { notFound, redirect } from 'next/navigation'
 import CollectionPage from '../../components/CollectionPage'
-import ComingSoon from '../../components/ComingSoon'
-import { PARENT_CATEGORY_SLUGS, SUBCATEGORIES, LIVE_CATEGORIES, findSubCategory } from '@/lib/categories'
+import { getCategoryProducts, getMenu, matchCategory } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/site'
 
 interface PageProps {
   params: Promise<{ category: string; subcategory: string }>
 }
 
-function categoryTitle(slug: string) {
-  return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+async function resolve(category: string, subcategory: string) {
+  const parent = matchCategory(await getMenu(), category)
+  const child = parent ? matchCategory(parent.children, subcategory, parent) : undefined
+  return { parent, child }
 }
 
 export async function generateStaticParams() {
-  const parents = Array.from(
-    new Set([...PARENT_CATEGORY_SLUGS, ...Object.keys(SUBCATEGORIES)])
-  )
-  return parents.flatMap((category) =>
-    (SUBCATEGORIES[category] || []).map((sub) => ({
-      category,
-      subcategory: sub.slug,
-    }))
+  const menu = await getMenu().catch(() => [])
+  return menu.flatMap((category) =>
+    category.children.map((sub) => ({ category: category.slug, subcategory: sub.slug }))
   )
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, subcategory } = await params
-  const catTitle = categoryTitle(category)
-  const sub = findSubCategory(category, subcategory)
-  const subTitle = sub ? sub.name : categoryTitle(subcategory)
-  const url = `${SITE_URL}/${category}/${subcategory}`
+  const { parent, child } = await resolve(category, subcategory)
+  if (!parent || !child) return {}
+  const catTitle = parent.name
+  const subTitle = child.name
+  const url = `${SITE_URL}/${parent.slug}/${child.slug}`
   return {
     title: `${subTitle} — ${catTitle} Online`,
     description: `Buy ${subTitle.toLowerCase()} online at Elite Sports Chennai. Genuine ${catTitle.toLowerCase()} gear with delivery across India.`,
@@ -52,12 +50,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SubCategoryPage({ params }: PageProps) {
   const { category, subcategory } = await params
-  const normalizedCategory = category.trim().toLowerCase()
+  const { parent, child } = await resolve(category, subcategory)
+  if (!parent) notFound()
+  if (!child) redirect(`/${parent.slug}`)
+  if (parent.slug !== category || child.slug !== subcategory) redirect(`/${parent.slug}/${child.slug}`)
 
-  if (!LIVE_CATEGORIES.has(normalizedCategory)) {
-    const sub = findSubCategory(normalizedCategory, subcategory.trim().toLowerCase())
-    return <ComingSoon title={sub ? `${sub.name} — ${categoryTitle(normalizedCategory)}` : categoryTitle(normalizedCategory)} />
-  }
-
-  return <CollectionPage key={`${normalizedCategory}:${subcategory}`} category={normalizedCategory} subcategory={subcategory} />
+  const products = await getCategoryProducts(child)
+  return (
+    <CollectionPage
+      key={`${parent.slug}:${child.slug}`}
+      category={parent.slug}
+      categoryName={parent.name}
+      subcategory={{ name: child.name, slug: child.slug }}
+      subLinks={parent.children.map(({ name, slug }) => ({ name, slug }))}
+      initialProducts={products}
+    />
+  )
 }
