@@ -101,6 +101,7 @@ function ProductGridSkeleton() {
 
 export default function CollectionPage({ category, categoryName, subcategory: activeSub, subLinks, initialProducts }: CollectionPageProps) {
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null)
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name'>('price-asc')
   const [page, setPage] = useState(1)
   const gridTopRef = useRef<HTMLDivElement>(null)
@@ -123,8 +124,29 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
   }, [selectedProduct])
   const currentImage = currentProductImages[selectedImageIndex] || 'https://placehold.co/400x400/f5f5f5/333333.png?text=No+Image'
 
+  const brands = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const product of products) {
+      if (product.brand) counts.set(product.brand, (counts.get(product.brand) || 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [products])
+
+  function toggleBrand(brand: string) {
+    setSelectedBrands((current) =>
+      current.includes(brand) ? current.filter((item) => item !== brand) : [...current, brand]
+    )
+    setPage(1)
+  }
+
   const filteredProducts = useMemo(() => {
     let result = [...products]
+
+    if (selectedBrands.length > 0) {
+      result = result.filter((p) => selectedBrands.includes(p.brand))
+    }
 
     if (selectedPrice) {
       const range = priceRanges.find((r) => r.label === selectedPrice)
@@ -141,7 +163,7 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
     })
 
     return result
-  }, [selectedPrice, sortBy, products])
+  }, [selectedPrice, selectedBrands, sortBy, products])
 
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
@@ -180,8 +202,12 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
     })
   }
 
+  const hasActiveFilters = selectedPrice !== null || selectedBrands.length > 0
+
   function clearFilters() {
     setSelectedPrice(null)
+    setSelectedBrands([])
+    setPage(1)
   }
 
   return (
@@ -245,7 +271,7 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                     Filters
-                    {selectedPrice && <span className="w-2 h-2 rounded-full bg-red-600 lg:hidden" />}
+                    {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-red-600 lg:hidden" />}
                     <svg
                       className={`w-4 h-4 lg:hidden transition-transform ${mobileFiltersOpen ? 'rotate-180' : ''}`}
                       fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
@@ -253,7 +279,7 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {selectedPrice && (
+                  {hasActiveFilters && (
                     <button onClick={clearFilters} className="text-xs text-red-600 font-semibold hover:underline">
                       Clear all
                     </button>
@@ -261,6 +287,25 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
                 </div>
 
                 <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block mt-4 lg:mt-0 pt-4 lg:pt-0 border-t border-gray-100 lg:border-0`}>
+                  {brands.length > 0 && (
+                    <div className="mb-5 pb-5 border-b border-gray-100">
+                      <h3 className="font-bold text-sm uppercase tracking-wide mb-3">Brand</h3>
+                      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        {brands.map((brand) => (
+                          <label key={brand.name} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              checked={selectedBrands.includes(brand.name)}
+                              onChange={() => toggleBrand(brand.name)}
+                              className="w-4 h-4 accent-red-600"
+                            />
+                            <span className="text-sm text-gray-600 group-hover:text-red-600 transition flex-1">{brand.name}</span>
+                            <span className="text-xs text-gray-400">({brand.count})</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <h3 className="font-bold text-sm uppercase tracking-wide mb-3">Price</h3>
                   <div className="space-y-2">
                     {priceRanges.map((range) => (
