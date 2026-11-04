@@ -1,10 +1,15 @@
 'use client'
 
+import { useEffect } from 'react'
 import Header from '../components/Header'
 import { useCart } from '../components/CartProvider'
 
 export default function CartPage() {
-  const { cart, updateQty, removeFromCart, cartTotal } = useCart()
+  const { cart, updateQty, removeFromCart, cartTotal, limits, stockIssues, refreshStock } = useCart()
+
+  useEffect(() => {
+    refreshStock()
+  }, [refreshStock])
 
   function formatMoney(amount: number) {
     return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -58,7 +63,8 @@ export default function CartPage() {
                         <span className="font-bold">{item.qty}</span>
                         <button
                           onClick={() => updateQty(item.key, 1)}
-                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-red-600 hover:text-red-600"
+                          disabled={limits[item.key] !== undefined && item.qty >= limits[item.key]}
+                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-red-600 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           +
                         </button>
@@ -69,6 +75,7 @@ export default function CartPage() {
                           Remove
                         </button>
                       </div>
+                      {stockIssues[item.key] && <p className="text-xs text-red-600 font-semibold mt-1">{stockIssues[item.key]}</p>}
                     </div>
                   </div>
                 ))}

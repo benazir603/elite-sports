@@ -162,6 +162,7 @@ export interface WooCommerceOrderPayload {
   payment_method: string
   payment_method_title: string
   set_paid: boolean
+  status?: string
   customer_id: number
   billing: BillingShipping
   shipping?: BillingShipping
@@ -394,13 +395,17 @@ export interface WooCommerceOrder {
   meta_data?: { id?: number; key: string; value: string }[]
 }
 
-export async function getOrdersByCustomer(customerId: number): Promise<WooCommerceOrder[]> {
-  const url = buildUrl('orders', { customer: customerId, per_page: 100 })
-  const res = await fetch(url, { next: { revalidate: 0 } })
+export async function getOrders(params: Record<string, string | number | undefined>): Promise<WooCommerceOrder[]> {
+  const url = buildUrl('orders', { per_page: 100, ...params })
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`WooCommerce orders fetch failed: ${res.status}`)
   }
   return res.json()
+}
+
+export async function getOrdersByCustomer(customerId: number): Promise<WooCommerceOrder[]> {
+  return getOrders({ customer: customerId })
 }
 
 export async function getOrderById(id: number): Promise<WooCommerceOrder | null> {

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useCart } from './CartProvider'
 
 function formatMoney(amount: number) {
@@ -7,7 +8,11 @@ function formatMoney(amount: number) {
 }
 
 export default function CartDrawer() {
-  const { cart, cartCount, cartTotal, updateQty, removeFromCart, isCartDrawerOpen, closeCartDrawer } = useCart()
+  const { cart, cartCount, cartTotal, updateQty, removeFromCart, isCartDrawerOpen, closeCartDrawer, limits, stockIssues, refreshStock } = useCart()
+
+  useEffect(() => {
+    if (isCartDrawerOpen) refreshStock()
+  }, [isCartDrawerOpen, refreshStock])
 
   if (!isCartDrawerOpen) return null
 
@@ -65,7 +70,8 @@ export default function CartDrawer() {
                     <span className="text-sm font-semibold">{item.qty}</span>
                     <button
                       onClick={() => updateQty(item.key, 1)}
-                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-xs hover:border-red-600 hover:text-red-600"
+                      disabled={limits[item.key] !== undefined && item.qty >= limits[item.key]}
+                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-xs hover:border-red-600 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       +
                     </button>
@@ -76,6 +82,7 @@ export default function CartDrawer() {
                       Remove
                     </button>
                   </div>
+                  {stockIssues[item.key] && <p className="text-xs text-red-600 font-semibold mt-1">{stockIssues[item.key]}</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-bold">{formatMoney(item.price * item.qty)}</p>

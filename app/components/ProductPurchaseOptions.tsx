@@ -50,7 +50,7 @@ function searchableWords(value: string) {
 }
 
 export default function ProductPurchaseOptions({ product, attributes, variations, colourOptions, galleryImages = [] }: ProductPurchaseOptionsProps) {
-  const { addToCart } = useCart()
+  const { addToCart, cart } = useCart()
   const router = useRouter()
   const variationAttributes = attributes.filter((attribute) => attribute.variation)
   const [selections, setSelections] = useState<Record<string, string>>(() => {
@@ -146,6 +146,11 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     ? selectedVariation.purchasable && selectedVariation.status === 'publish' && selectedVariation.stock_status === 'instock'
     : variationAttributes.length === 0 && product.inStock
   const stockQuantity = selectedVariation ? selectedVariation.stock_quantity : product.stockQuantity
+  const itemKey = `${product.id}:${selectedVariation?.id || 0}`
+  const inCartQty = cart.find((item) => item.key === itemKey)?.qty || 0
+  const maxQty = stockQuantity === null ? 20 : Math.min(stockQuantity, 20)
+  const remaining = maxQty - inCartQty
+  const [addError, setAddError] = useState('')
   const image = selectedVariation?.image?.src || product.image
   const discount = regularPrice > price ? regularPrice - price : 0
   const discountPercent = regularPrice > 0 ? Math.round((discount / regularPrice) * 100) : 0
@@ -179,10 +184,12 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     }
   }
 
-  function purchase(buyNow: boolean) {
+  async function purchase(buyNow: boolean) {
     const item = selectedCartItem()
     if (!item) return
-    addToCart(item)
+    const error = await addToCart(item)
+    setAddError(error || '')
+    if (error) return
     if (buyNow) {
       trackEvent('begin_checkout', { value: item.price, currency: 'INR' })
       router.push('/checkout')
@@ -273,13 +280,19 @@ export default function ProductPurchaseOptions({ product, attributes, variations
           <span className="text-red-600 font-semibold">Out of stock</span>
         )}
         {!needsSelection && stockQuantity !== null && <span className="text-gray-500 ml-2">({stockQuantity} units available)</span>}
+        {!needsSelection && inStock && remaining <= 0 && (
+          <span className="block text-red-600 font-semibold mt-1">
+            {maxQty === 0 ? 'Out of stock' : `Only ${maxQty} ${maxQty === 1 ? 'item is' : 'items are'} available in stock.`} You already have {inCartQty} in your cart.
+          </span>
+        )}
+        {addError && <span className="block text-red-600 font-semibold mt-1">{addError}</span>}
       </div>
 
       <div ref={mainCtaRef} className="flex flex-col sm:flex-row gap-3 mb-4 w-full">
-        <button type="button" disabled={needsSelection || !inStock} onClick={() => purchase(false)} className="w-full sm:flex-1 bg-black hover:bg-red-600 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
-          Add to Cart
+        <button type="button" disabled={needsSelection || !inStock || remaining <= 0} onClick={() => purchase(false)} className="w-full sm:flex-1 bg-black hover:bg-red-600 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
+          {inStock || needsSelection ? 'Add to Cart' : 'Out of Stock'}
         </button>
-        <button type="button" disabled={needsSelection || !inStock} onClick={() => purchase(true)} className="w-full sm:flex-1 bg-red-600 hover:bg-red-700 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
+        <button type="button" disabled={needsSelection || !inStock || remaining <= 0} onClick={() => purchase(true)} className="w-full sm:flex-1 bg-red-600 hover:bg-red-700 text-white font-medium text-center py-2.5 px-6 rounded-full shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">
           Buy Now
         </button>
       </div>

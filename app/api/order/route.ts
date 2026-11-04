@@ -2,11 +2,22 @@ import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createOrder, createCustomer, findCustomerByEmail, getProductById, getProductVariation, updateOrder, sanitizeWooUsername } from '@/lib/woocommerce'
+import { fetchStock, releaseReservation, releaseStaleReservations } from '@/lib/inventory'
+import { resolveStock, stockMessage } from '@/lib/stock'
 import { createRazorpayOrder } from '@/lib/razorpay'
 import { calculateShipping, getShippingZone, itemWeightKg, ZONE_LABELS } from '@/lib/shipping'
 
 const MAX_CART_ITEMS = 50
 const MAX_QUANTITY = 20
+
+/** Cart item that can't be fulfilled at the requested quantity right now. */
+class StockConflictError extends Error {
+  item?: string
+  constructor(message: string, item?: string) {
+    super(message)
+    this.item = item
+  }
+}
 
 interface CheckoutCustomer {
   firstName: string
@@ -79,6 +90,8 @@ export async function POST(request: NextRequest) {
 
   let wooOrderId: number | null = null
   try {
+    // Best-effort cleanup of abandoned unpaid reservations so their stock is freed.
+    void releaseStaleReservations()
     const body = await request.json()
     const isPickup = body.fulfilment === 'pickup'
     const cart = parseCart(body.cart)
@@ -90,34 +103,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please provide valid Indian billing and shipping details' }, { status: 400 })
     }
 
+    // Live stock check against WooCommerce (source of truth). Runs before any
+    // order is created so customers get a clear message instead of a failed order.
     const purchasableItems = await Promise.all(cart.map(async (item) => {
       const product = await getProductById(item.productId, true)
-      if (product.status !== 'publish') {
-        throw new Error(`${product.name || 'A cart item'} is not available for purchase`)
-      }
       if (product.type === 'variable' && !item.variationId) {
-        throw new Error(`Select options for ${product.name}`)
+        throw new StockConflictError(`Select options for ${product.name}`)
       }
       if (product.type !== 'variable' && item.variationId) {
-        throw new Error(`Invalid variation for ${product.name}`)
+        throw new StockConflictError(`Invalid variation for ${product.name}`)
       }
       const variation = item.variationId ? await getProductVariation(item.productId, item.variationId) : null
-      const price = Number(variation?.price ?? product.price)
-      const stockStatus = variation?.stock_status ?? product.stock_status
-      const stockQuantity = variation?.stock_quantity ?? product.stock_quantity
-      if (
-        stockStatus !== 'instock' ||
-        (variation && (variation.status !== 'publish' || !variation.purchasable)) ||
-        !Number.isFinite(price) || price <= 0
-      ) {
-        throw new Error(`${product.name} is not available for purchase`)
+      const stock = resolveStock(product, variation)
+      const available = stock.available === null ? MAX_QUANTITY : Math.min(stock.available, MAX_QUANTITY)
+      if (!stock.purchasable || item.quantity > available) {
+        throw new StockConflictError(stockMessage(stock.purchasable ? available : 0), stock.name)
       }
-      if (stockQuantity !== null && item.quantity > stockQuantity) {
-        throw new Error(`Only ${stockQuantity} units of ${product.name} are available`)
-      }
-      return { item, product, price }
+      return { item, product, price: stock.price }
     }))
-    const lineItems = purchasableItems.map(({ item, price }) => {
+    const lineItems = purchasableItems.map(({ item, price }: { item: { productId: number; variationId?: number; quantity: number }; price: number }) => {
       const total = (price * item.quantity).toFixed(2)
       return {
         product_id: item.productId,
@@ -164,10 +168,13 @@ export async function POST(request: NextRequest) {
     const shippingZone = getShippingZone(customer.state, customer.postcode)
     const shippingCharge = isPickup ? 0 : calculateShipping(totalWeightKg, shippingZone)
 
+    // 'on-hold' makes WooCommerce decrement stock immediately — that is the
+    // reservation. It is released by 'cancelled'/'failed' if payment never completes.
     const order = await createOrder({
       payment_method: 'razorpay',
       payment_method_title: 'Razorpay (Cards / UPI / NetBanking)',
       set_paid: false,
+      status: 'on-hold',
       customer_id: customerId,
       billing: { ...address, email: sessionEmail, phone: customer.phone },
       ...(isPickup
@@ -191,6 +198,18 @@ export async function POST(request: NextRequest) {
       ],
     })
     wooOrderId = order.id
+
+    // Race guard: two checkouts can both pass the earlier check. Re-read stock
+    // after reserving — if WooCommerce went negative, release and reject.
+    for (const { item } of purchasableItems) {
+      const after = await fetchStock(item.productId, item.variationId)
+      if (after.available !== null && after.available < 0) {
+        await releaseReservation(order.id)
+        wooOrderId = null
+        throw new StockConflictError(stockMessage(0), after.name)
+      }
+    }
+
     const orderTotal = Number(order.total)
     if (!Number.isFinite(orderTotal) || orderTotal <= 0) {
       throw new Error('WooCommerce returned an invalid order total')
@@ -221,10 +240,14 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     if (wooOrderId) {
       try {
-        await updateOrder(wooOrderId, { status: 'failed' })
+        // 'cancelled' restores the reserved stock in WooCommerce.
+        await updateOrder(wooOrderId, { status: 'cancelled' })
       } catch (updateError) {
-        console.error('Could not mark incomplete order as failed:', updateError)
+        console.error('Could not release incomplete order reservation:', updateError)
       }
+    }
+    if (error instanceof StockConflictError) {
+      return NextResponse.json({ error: error.message, item: error.item }, { status: 409 })
     }
     console.error('Order creation error:', error)
     const message = error instanceof Error ? error.message : 'Failed to create order'

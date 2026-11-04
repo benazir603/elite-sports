@@ -7,7 +7,7 @@ import { useCart } from '../components/CartProvider'
 import { trackEvent } from '@/lib/analytics'
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, clearCart } = useCart()
+  const { cart, cartTotal, clearCart, refreshStock, stockIssues } = useCart()
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -142,13 +142,18 @@ export default function CheckoutPage() {
     setLoading(true)
     setError('')
     try {
+      // Re-check live stock before placing the order; clamps stale cart quantities.
+      await refreshStock()
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cart, customer: form, fulfilment }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Order failed')
+      if (!res.ok) {
+        if (res.status === 409) await refreshStock()
+        throw new Error(data.error || 'Order failed')
+      }
       await openRazorpayCheckout(data)
     } catch (err: any) {
       setError(err.message || 'Something went wrong')
@@ -460,6 +465,7 @@ export default function CheckoutPage() {
                       <p className="font-semibold">{item.name}</p>
                       {item.variation && <p className="text-gray-500 text-sm">{Object.entries(item.variation).map(([name, value]) => `${name}: ${value}`).join(' · ')}</p>}
                       <p className="text-gray-500 text-sm">Qty: {item.qty}</p>
+                      {stockIssues[item.key] && <p className="text-red-600 text-sm font-semibold">{stockIssues[item.key]}</p>}
                       <p className="font-bold text-red-600">{formatMoney(item.price * item.qty)}</p>
                     </div>
                   </div>

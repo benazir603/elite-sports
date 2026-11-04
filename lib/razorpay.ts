@@ -102,6 +102,7 @@ export async function getRazorpayOrder(orderId: string) {
   return res.json() as Promise<{
     id: string
     amount: number
+    amount_paid: number
     currency: string
     receipt: string
   }>
