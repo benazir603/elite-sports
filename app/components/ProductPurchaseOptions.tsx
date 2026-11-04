@@ -279,7 +279,6 @@ export default function ProductPurchaseOptions({ product, attributes, variations
         ) : (
           <span className="text-red-600 font-semibold">Out of stock</span>
         )}
-        {!needsSelection && stockQuantity !== null && <span className="text-gray-500 ml-2">({stockQuantity} units available)</span>}
         {!needsSelection && inStock && remaining <= 0 && (
           <span className="block text-red-600 font-semibold mt-1">
             {maxQty === 0 ? 'Out of stock' : `Only ${maxQty} ${maxQty === 1 ? 'item is' : 'items are'} available in stock.`} You already have {inCartQty} in your cart.
