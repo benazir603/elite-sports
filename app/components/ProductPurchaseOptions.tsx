@@ -41,6 +41,11 @@ function isSizeAttribute(attribute: WooCommerceAttribute) {
   return attribute.name.toLowerCase().includes('size')
 }
 
+/** "Quantity" is a pack-size attribute in WooCommerce, not a customer choice — hide it. */
+function isHiddenAttribute(attribute: WooCommerceAttribute) {
+  return attribute.name.toLowerCase() === 'quantity'
+}
+
 function searchableWords(value: string) {
   return value
     .toLowerCase()
@@ -52,7 +57,11 @@ function searchableWords(value: string) {
 export default function ProductPurchaseOptions({ product, attributes, variations, colourOptions, galleryImages = [] }: ProductPurchaseOptionsProps) {
   const { addToCart, cart } = useCart()
   const router = useRouter()
-  const variationAttributes = attributes.filter((attribute) => attribute.variation)
+  const variationAttributes = attributes.filter((attribute) => attribute.variation && !isHiddenAttribute(attribute))
+  const hiddenAttributeNames = useMemo(
+    () => attributes.filter((attribute) => attribute.variation && isHiddenAttribute(attribute)).map((attribute) => attribute.name.toLowerCase()),
+    [attributes]
+  )
   const [selections, setSelections] = useState<Record<string, string>>(() => {
     const colourAttribute = variationAttributes.find(isColourAttribute)
     if (!colourAttribute) return {}
@@ -93,12 +102,20 @@ export default function ProductPurchaseOptions({ product, attributes, variations
     if (variationAttributes.length === 0) return undefined
     if (variationAttributes.some((attribute) => !selections[attributeKey(attribute)])) return undefined
     return variations.find((variation) =>
+      variation.purchasable && variation.status === 'publish' && variation.stock_status === 'instock' &&
       variation.attributes.every((attribute) => {
+        if (hiddenAttributeNames.includes(attribute.name.toLowerCase())) return true
+        const selected = selections[attributeKey(attribute)]
+        return !attribute.option || selected?.toLowerCase() === attribute.option.toLowerCase()
+      })
+    ) || variations.find((variation) =>
+      variation.attributes.every((attribute) => {
+        if (hiddenAttributeNames.includes(attribute.name.toLowerCase())) return true
         const selected = selections[attributeKey(attribute)]
         return !attribute.option || selected?.toLowerCase() === attribute.option.toLowerCase()
       })
     )
-  }, [selections, variationAttributes, variations])
+  }, [selections, variationAttributes, hiddenAttributeNames, variations])
 
   const previewVariation = useMemo(() => {
     const selectedEntries = Object.entries(selections).filter(([, value]) => Boolean(value))
