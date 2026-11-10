@@ -27,6 +27,7 @@ const baseVariation = {
   price: '1600',
   stock_status: 'instock' as const,
   stock_quantity: 4,
+  attributes: [{ id: 0, name: 'Weight', option: '3U' }],
 }
 
 describe('resolveStock', () => {

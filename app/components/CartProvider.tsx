@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback, ReactNode } from 'react'
 import { trackEvent } from '@/lib/analytics'
 
 export interface CartItem {
@@ -22,6 +22,9 @@ interface StockResponseItem {
   available: number | null
   max: number
   purchasable: boolean
+  variationId?: number
+  variation?: Record<string, string>
+  price?: number
   message?: string
 }
 
@@ -82,6 +85,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [checkingStock, setCheckingStock] = useState(false)
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const cartRef = useRef<CartItem[]>(cart)
+  useEffect(() => {
+    cartRef.current = cart
+  }, [cart])
 
   useEffect(() => {
     setCart(loadCart())
@@ -137,26 +144,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const addToCart = useCallback(async (item: CartItemInput): Promise<string | undefined> => {
-    const key = getCartKey(item)
     const stock = await fetchStockLimits([item]).catch(() => null)
-    const info = stock?.find((entry) => entry.key === key)
+    const info = stock?.[0]
+    // For variable products added without a variation (e.g. collection grids),
+    // /api/stock resolves the first purchasable in-stock variation for us.
+    if (!item.variationId && info?.variationId) {
+      item = {
+        ...item,
+        variationId: info.variationId,
+        variation: info.variation,
+        price: info.price ?? item.price,
+      }
+    }
+    const key = getCartKey(item)
     const max = info?.max ?? limits[key] ?? 20
 
+    const existingQty = cartRef.current.find((cartItem) => cartItem.key === key)?.qty || 0
     let error: string | undefined
     if (info && !info.purchasable) error = 'Out of stock'
+    else if (existingQty >= max) error = `Only ${max} ${max === 1 ? 'item is' : 'items are'} available in stock.`
 
-    setCart((prev) => {
-      const existing = prev.find((cartItem) => cartItem.key === key)
-      const currentQty = existing?.qty || 0
-      if (error || currentQty >= max) {
-        if (!error) error = `Only ${max} ${max === 1 ? 'item is' : 'items are'} available in stock.`
-        return prev
-      }
-      if (existing) {
-        return prev.map((cartItem) => (cartItem.key === key ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem))
-      }
-      return [...prev, { ...item, key, qty: 1 }]
-    })
+    if (!error) {
+      setCart((prev) => {
+        const existing = prev.find((cartItem) => cartItem.key === key)
+        if (existing) {
+          return prev.map((cartItem) => (cartItem.key === key ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem))
+        }
+        return [...prev, { ...item, key, qty: 1 }]
+      })
+    }
 
     setLimits((prev) => ({ ...prev, [key]: max }))
     if (error) {

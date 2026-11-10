@@ -11,6 +11,8 @@ export interface StockInfo {
   /** `null` means WooCommerce is not tracking a quantity for this item (sold while "In stock"). */
   available: number | null
   purchasable: boolean
+  /** Attribute name → option for the resolved variation (variable products). */
+  variationAttributes?: Record<string, string>
 }
 
 export interface StockLine {
@@ -37,7 +39,7 @@ export function stockMessage(available: number) {
 }
 
 type ProductStock = Pick<WooCommerceProduct, 'id' | 'name' | 'type' | 'status' | 'price' | 'stock_status' | 'stock_quantity'>
-type VariationStock = Pick<WooCommerceVariation, 'id' | 'status' | 'purchasable' | 'price' | 'stock_status' | 'stock_quantity'>
+type VariationStock = Pick<WooCommerceVariation, 'id' | 'status' | 'purchasable' | 'price' | 'stock_status' | 'stock_quantity' | 'attributes'>
 
 /** Derives purchasability and available quantity from WooCommerce product/variation data. */
 export function resolveStock(product: ProductStock, variation: VariationStock | null): StockInfo {
@@ -61,6 +63,9 @@ export function resolveStock(product: ProductStock, variation: VariationStock | 
     price,
     available,
     purchasable,
+    variationAttributes: variation
+      ? Object.fromEntries(variation.attributes.map((attribute) => [attribute.name, attribute.option]))
+      : undefined,
   }
 }
 

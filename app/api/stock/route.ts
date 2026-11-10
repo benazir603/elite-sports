@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
           available: info.available,
           max,
           purchasable: info.purchasable,
+          variationId: info.variationId,
+          variation: info.variationAttributes,
           message: max === 0 ? stockMessage(0) : undefined,
         }
       }),

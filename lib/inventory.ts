@@ -1,4 +1,4 @@
-import { getOrders, getProductById, getProductVariation, updateOrder, type WooCommerceOrder } from './woocommerce'
+import { getOrders, getProductById, getProductVariation, getProductVariations, updateOrder, type WooCommerceOrder } from './woocommerce'
 import { getRazorpayOrder } from './razorpay'
 import { resolveStock, stockKey, type StockInfo, type StockLine } from './stock'
 
@@ -8,11 +8,22 @@ export const RESERVATION_MINUTES = 60
 /** Reads live (uncached) stock for one product or variation straight from WooCommerce. */
 export async function fetchStock(productId: number, variationId?: number): Promise<StockInfo> {
   const product = await getProductById(productId, true)
-  const variation = variationId ? await getProductVariation(productId, variationId) : null
-  if (variationId && !product.variations?.includes(variationId)) {
-    return { productId, variationId, name: product.name, price: 0, available: 0, purchasable: false }
+  if (variationId) {
+    if (!product.variations?.includes(variationId)) {
+      return { productId, variationId, name: product.name, price: 0, available: 0, purchasable: false }
+    }
+    return resolveStock(product, await getProductVariation(productId, variationId))
   }
-  return resolveStock(product, variation)
+  // Variable product without a chosen variation: resolve to the first
+  // purchasable in-stock variation so grids can offer a plain "Add to Cart".
+  if (product.type === 'variable') {
+    const variations = await getProductVariations(productId)
+    const fallback = variations.find(
+      (variation) => variation.status === 'publish' && variation.purchasable && variation.stock_status === 'instock'
+    )
+    if (fallback) return resolveStock(product, fallback)
+  }
+  return resolveStock(product, null)
 }
 
 export async function fetchStockMap(lines: Pick<StockLine, 'productId' | 'variationId'>[]) {

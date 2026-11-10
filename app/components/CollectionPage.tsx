@@ -446,22 +446,13 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
                               <span className="text-xs text-gray-400 line-through">{formatMoney(product.originalPrice)}</span>
                             )}
                           </div>
-                          {product.type === 'variable' ? (
-                            <Link
-                              href={`/product/${product.id}`}
-                              className="mt-3 block w-full text-center bg-black hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wide py-2 rounded-full transition"
-                            >
-                              Select Options
-                            </Link>
-                          ) : (
-                            <button
-                              onClick={() => addToCart(product)}
-                              disabled={!product.inStock}
-                              className="mt-3 w-full bg-black hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wide py-2 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                            </button>
-                          )}
+                          <button
+                            onClick={() => addToCart(product)}
+                            disabled={!product.inStock}
+                            className="mt-3 w-full bg-black hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wide py-2 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -591,23 +582,13 @@ export default function CollectionPage({ category, categoryName, subcategory: ac
                   </p>
                 )}
                 <div className="mt-auto space-y-2">
-                  {selectedProduct.type === 'variable' ? (
-                    <Link
-                      href={`/product/${selectedProduct.id}`}
-                      onClick={() => setSelectedProduct(null)}
-                      className="block w-full text-center bg-black hover:bg-red-600 text-white text-sm font-bold uppercase tracking-wide py-3 rounded-full transition"
-                    >
-                      Select Options
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => { addToCart(selectedProduct); setSelectedProduct(null) }}
-                      disabled={!selectedProduct.inStock}
-                      className="w-full bg-black hover:bg-red-600 text-white text-sm font-bold uppercase tracking-wide py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {selectedProduct.inStock ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { addToCart(selectedProduct); setSelectedProduct(null) }}
+                    disabled={!selectedProduct.inStock}
+                    className="w-full bg-black hover:bg-red-600 text-white text-sm font-bold uppercase tracking-wide py-3 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {selectedProduct.inStock ? 'Add to Cart' : 'Out of Stock'}
+                  </button>
                   <Link
                     href={`/product/${selectedProduct.id}`}
                     onClick={() => setSelectedProduct(null)}
