@@ -31,6 +31,30 @@ export default function ContactPage() {
             </div>
           </div>
 
+          <div className="mb-8">
+            <h2 className="font-bold text-gray-900 mb-3">Find Us on the Map</h2>
+            <div className="rounded-xl overflow-hidden border border-gray-200">
+              <iframe
+                src={`https://maps.google.com/maps?q=${encodeURIComponent('Elite Sports, No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Tamil Nadu 600126')}&output=embed`}
+                width="100%"
+                height="360"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Elite Sports store location on Google Maps"
+              />
+            </div>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('Elite Sports, No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Tamil Nadu 600126')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-full transition text-sm"
+            >
+              Get Directions
+            </a>
+          </div>
+
           <a
             href="/support"
             className="inline-block bg-black hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition"
