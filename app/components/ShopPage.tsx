@@ -30,7 +30,7 @@ export default function ShopPage() {
             image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1600&q=80',
             title: 'Run Like the Wind',
             subtitle: 'Track, field and running gear for every stride.',
-            cta: 'Shop Running',
+            cta: 'Shop Now',
           },
           {
             image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=80',
