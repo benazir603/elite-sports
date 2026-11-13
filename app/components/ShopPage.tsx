@@ -23,8 +23,8 @@ export default function ShopPage() {
           {
             image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1600&q=80',
             title: 'Dominate the Court',
-            subtitle: 'Elite basketball and court shoes engineered for champions.',
-            cta: 'Shop Basketball',
+            subtitle: 'Elite badminton, pickleball and volleyball gear engineered for champions.',
+            cta: 'Shop Now',
           },
           {
             image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1600&q=80',
@@ -35,8 +35,8 @@ export default function ShopPage() {
           {
             image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=80',
             title: 'Train Without Limits',
-            subtitle: 'Professional gym and training equipment for your best performance.',
-            cta: 'Shop Training',
+            subtitle: 'Professional equipment and training gear for your best performance.',
+            cta: 'Shop Now',
           },
         ].map((slide, index) => (
           <div
@@ -153,22 +153,16 @@ export default function ShopPage() {
                 tag: 'Balls, Studs & Kits',
               },
               {
-                name: 'Basketball',
-                href: '/basketball',
-                image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-                tag: 'Balls & Court Essentials',
+                name: 'Pickle Ball',
+                href: '/pickle-ball',
+                image: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=800&q=80',
+                tag: 'Paddles & Court Gear',
               },
               {
-                name: 'Fitness & Gym',
-                href: '/fitness',
-                image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-                tag: 'Dumbbells, Bands & More',
-              },
-              {
-                name: 'Table Tennis',
-                href: '/table-tennis',
-                image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=800&q=80',
-                tag: 'Bats, Balls & Rubbers',
+                name: 'Volley Ball',
+                href: '/volley-ball',
+                image: 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=800&q=80',
+                tag: 'Balls & Court Shoes',
               },
             ].map((sport) => (
               <a
@@ -319,9 +313,8 @@ export default function ShopPage() {
                 { name: 'Badminton', slug: 'badminton' },
                 { name: 'Cricket', slug: 'cricket' },
                 { name: 'Football', slug: 'football' },
-                { name: 'Table Tennis', slug: 'table-tennis' },
-                { name: 'Fitness', slug: 'fitness' },
-                { name: 'Swimming', slug: 'swimming' },
+                { name: 'Pickle Ball', slug: 'pickle-ball' },
+                { name: 'Volley Ball', slug: 'volley-ball' },
               ].map((category) => (
                 <li key={category.slug}>
                   <a href={`/${category.slug}`} className="hover:text-white transition">{category.name}</a>
