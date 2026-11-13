@@ -35,7 +35,7 @@ export default function ContactPage() {
             <h2 className="font-bold text-gray-900 mb-3">Find Us on the Map</h2>
             <div className="rounded-xl overflow-hidden border border-gray-200">
               <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent('Elite Sports, No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Tamil Nadu 600126')}&output=embed`}
+                src="https://maps.google.com/maps?cid=10733533905815597229&output=embed"
                 width="100%"
                 height="360"
                 style={{ border: 0 }}
@@ -46,7 +46,7 @@ export default function ContactPage() {
               />
             </div>
             <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('Elite Sports, No 6, Mohan Complex, Tambaram Eastern Bypass Rd, Tiruvanchery, Selaiyur, Chennai, Tamil Nadu 600126')}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('V4QR+V39 Tiruvanchery, Selaiyur, Puthur, Tamil Nadu 600126')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-full transition text-sm"
