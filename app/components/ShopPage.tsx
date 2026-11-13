@@ -155,7 +155,7 @@ export default function ShopPage() {
               {
                 name: 'Pickle Ball',
                 href: '/pickle-ball',
-                image: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=800&q=80',
+                image: 'https://lightslategrey-monkey-361905.hostingersite.com/wp-content/uploads/2026/10/proase-pickle-pro-white-black-8.webp',
                 tag: 'Paddles & Court Gear',
               },
               {
