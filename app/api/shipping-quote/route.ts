@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
     }
 
     const zone = getShippingZone(state, postcode)
+    const { courier, packaging, total } = calculateShipping()
     return NextResponse.json({
       zone,
       zoneLabel: ZONE_LABELS[zone],
       weightKg: Number(weightKg.toFixed(3)),
-      charge: calculateShipping(weightKg, zone),
+      courier,
+      packaging,
+      charge: total,
     })
   } catch (error) {
     console.error('Shipping quote error:', error)

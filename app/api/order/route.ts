@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       0
     )
     const shippingZone = getShippingZone(customer.state, customer.postcode)
-    const shippingCharge = isPickup ? 0 : calculateShipping(totalWeightKg, shippingZone)
+    const shippingCharge = isPickup ? 0 : calculateShipping().total
 
     // 'on-hold' makes WooCommerce decrement stock immediately — that is the
     // reservation. It is released by 'cancelled'/'failed' if payment never completes.
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
             shipping: address,
             shipping_lines: [{
               method_id: 'flat_rate',
-              method_title: `Courier — ${ZONE_LABELS[shippingZone]}`,
+              method_title: `Courier + Packaging — ${ZONE_LABELS[shippingZone]}`,
               total: shippingCharge.toFixed(2),
             }],
           }),

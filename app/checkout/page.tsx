@@ -23,7 +23,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState('')
   const [savedCustomer, setSavedCustomer] = useState<any>(null)
   const [fulfilment, setFulfilment] = useState<'delivery' | 'pickup'>('delivery')
-  const [shippingQuote, setShippingQuote] = useState<{ charge: number; zoneLabel: string } | null>(null)
+  const [shippingQuote, setShippingQuote] = useState<{ charge: number; courier: number; packaging: number; zoneLabel: string } | null>(null)
   const { data: session, status } = useSession()
   const checkoutTracked = useRef(false)
 
@@ -49,7 +49,7 @@ export default function CheckoutPage() {
         .then((res) => res.json())
         .then((data) => {
           if (typeof data?.charge === 'number') {
-            setShippingQuote({ charge: data.charge, zoneLabel: data.zoneLabel })
+            setShippingQuote({ charge: data.charge, courier: data.courier ?? data.charge, packaging: data.packaging ?? 0, zoneLabel: data.zoneLabel })
           } else {
             setShippingQuote(null)
           }
@@ -485,6 +485,11 @@ export default function CheckoutPage() {
                           : 'Enter PIN code & state'}
                     </span>
                   </div>
+                  {fulfilment === 'delivery' && shippingQuote && (
+                    <p className="text-xs text-gray-400 text-right">
+                      Courier {formatMoney(shippingQuote.courier)} + Packaging {formatMoney(shippingQuote.packaging)}
+                    </p>
+                  )}
                   <div className="flex justify-between text-lg font-black pt-1">
                     <span>Total</span>
                     <span>{formatMoney(cartTotal + (fulfilment === 'delivery' ? shippingQuote?.charge || 0 : 0))}</span>
